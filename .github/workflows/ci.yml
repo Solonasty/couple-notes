@@ -23,7 +23,9 @@ jobs:
           cache: npm
 
       - name: Install deps
-        run: npm ci
+        run: |
+          npm config set registry https://registry.npmjs.org/
+          npm ci
 
       - name: Lint
         run: npm run lint
