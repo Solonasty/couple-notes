@@ -1,0 +1,56 @@
+<mat-sidenav-container class="container">
+    <mat-sidenav
+        #drawer
+        class="sidenav"
+        [mode]="isMobile() ? 'over' : 'side'"
+        [opened]="!isMobile()"
+        [fixedInViewport]="isMobile()"
+        fixedTopGap="56">
+
+        <div class="logo">Couple Notes</div>
+
+        <mat-nav-list>
+            <a mat-list-item routerLink="/app" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+                <mat-icon class="material-symbols-outlined">dashboard</mat-icon>
+                <span>Кабинет</span>
+            </a>
+
+            <a mat-list-item routerLink="/app/notes" routerLinkActive="active">
+                <mat-icon class="material-symbols-outlined">edit_note</mat-icon>
+                <span>Заметки</span>
+            </a>
+
+            <a mat-list-item routerLink="/app/weekly" routerLinkActive="active">
+                <mat-icon class="material-symbols-outlined">summarize</mat-icon>
+                <span>Сводка</span>
+            </a>
+        </mat-nav-list>
+
+        <div class="spacer"></div>
+
+        <button mat-button>
+            <mat-icon class="material-symbols-outlined">logout</mat-icon>
+            Выйти
+        </button>
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+        <mat-toolbar color="primary" class="toolbar">
+            @if (isMobile()) {
+            <button
+                mat-icon-button
+                (click)="drawer.toggle()"
+                aria-label="Open menu">
+                <mat-icon class="material-symbols-outlined">menu</mat-icon>
+            </button>
+            }
+
+            <span>Couple Notes</span>
+            <span class="toolbar-spacer"></span>
+        </mat-toolbar>
+
+        <main class="content">
+            <router-outlet />
+        </main>
+    </mat-sidenav-content>
+</mat-sidenav-container>

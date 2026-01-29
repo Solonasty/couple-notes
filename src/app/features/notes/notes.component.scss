@@ -1,0 +1,119 @@
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 12px;
+  }
+  
+  .title {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 20px;
+    font-weight: 500;
+  }
+  
+  .count {
+    font-size: 14px;
+    opacity: 0.7;
+  }
+  
+  /* Карточка добавления */
+  .add-card {
+    margin-bottom: 16px;
+    border-left: 4px solid var(--mat-sys-primary);
+  }
+  
+  .full {
+    width: 100%;
+  }
+  
+  .add-form {
+    display: grid;
+    gap: 12px;
+  }
+  
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  
+  /* Список */
+  .empty {
+    opacity: 0.7;
+    margin: 16px 0;
+  }
+  
+  .list {
+    display: grid;
+    gap: 12px;
+  }
+  
+  .note {
+    border-radius: 16px;
+  }
+  
+  .note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .note-date {
+    font-size: 12px;
+    opacity: 0.7;
+  }
+  
+  .note-text {
+    white-space: pre-wrap;
+    line-height: 1.4;
+  }
+  
+  /* Появление заметки */
+.note-enter {
+    animation: noteIn 160ms ease-out;
+  }
+  
+  @keyframes noteIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Удаление заметки (делаем через transition + @starting-style) */
+  .note {
+    opacity: 1;
+    transform: none;
+    transition: opacity 140ms ease-in, transform 140ms ease-in;
+  
+    @starting-style {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  
+  .note-leave {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  
+  /* Появление/скрытие панели добавления */
+  .panel-enter {
+    animation: panelIn 180ms ease-out;
+  }
+  
+  @keyframes panelIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  
+  .add-card {
+    transition: opacity 140ms ease-in, transform 140ms ease-in;
+  }
+  
+  .panel-leave {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  

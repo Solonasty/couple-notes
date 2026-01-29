@@ -1,0 +1,59 @@
+.container {
+    height: 100vh;
+}
+
+.toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.sidenav {
+    width: 280px;
+    padding: 12px;
+}
+
+.logo {
+    font-weight: 700;
+    font-size: 18px;
+    padding: 12px;
+}
+
+.content {
+    padding: 16px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.toolbar-spacer {
+    flex: 1 1 auto;
+}
+
+.spacer {
+    flex: 1 1 auto;
+}
+
+a.active {
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 8px;
+}
+
+mat-icon {
+    margin-right: 10px;
+}
+
+@media (max-width: 600px) {
+    .sidenav {
+        width: 85vw;
+        max-width: 320px;
+    }
+
+    .content {
+        padding: 12px;
+        max-width: 100%;
+    }
+
+    .logo {
+        font-size: 16px;
+    }
+}
