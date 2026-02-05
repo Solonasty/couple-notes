@@ -58,7 +58,7 @@
               <mat-card-content>
                 <div class="note-header">
                   <div class="note-date">
-                    {{ n.createdAt | date:'dd.MM.yyyy, HH:mm' }}
+                    {{ n.createdAt?.toDate?.() | date:'dd.MM.yyyy, HH:mm' }}
                   </div>
 
                   <button

@@ -28,9 +28,15 @@
 
         <div class="spacer"></div>
 
-        <button mat-button>
-            <mat-icon class="material-symbols-outlined">logout</mat-icon>
-            Выйти
+        @if (user()) {
+        <div class="user">
+            {{ user()?.email }}
+        </div>
+        }
+
+        <button mat-button (click)="logout()">
+        <mat-icon class="material-symbols-outlined">logout</mat-icon>
+        Выйти
         </button>
     </mat-sidenav>
 

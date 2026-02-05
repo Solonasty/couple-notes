@@ -1,29 +1,31 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { ShellComponent } from './shell.component';
+import { RegisterComponent } from './register.component';
 
 import { signal } from '@angular/core';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../../core/services/auth.service';
 
 class AuthServiceMock {
-  user = signal<any | null>({ email: 'test@mail.com' });
+  user = signal<any | null>(null);
+  signIn = jasmine.createSpy('signIn').and.resolveTo(void 0);
+  signUp = jasmine.createSpy('signUp').and.resolveTo(void 0);
   logout = jasmine.createSpy('logout').and.resolveTo(void 0);
 }
 
-describe('ShellComponent', () => {
-  let component: ShellComponent;
-  let fixture: ComponentFixture<ShellComponent>;
+describe('RegisterComponent', () => {
+  let component: RegisterComponent;
+  let fixture: ComponentFixture<RegisterComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ShellComponent],
+      imports: [RegisterComponent],
       providers: [
         provideRouter([]),
         { provide: AuthService, useClass: AuthServiceMock },
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(ShellComponent);
+    fixture = TestBed.createComponent(RegisterComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

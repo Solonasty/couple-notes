@@ -5,11 +5,7 @@ import { MatCardModule } from '@angular/material/card';
   standalone: true,
   selector: 'app-dashboard',
   imports: [MatCardModule],
-  template: `
-    <mat-card>
-      <mat-card-title>Личный кабинет</mat-card-title>
-      <mat-card-content>Здесь будет пара, инвайт и быстрые действия.</mat-card-content>
-    </mat-card>
-  `
+  templateUrl: './dashboard.component.html',
+  styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent {}

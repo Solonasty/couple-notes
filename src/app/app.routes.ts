@@ -1,26 +1,33 @@
 import { Routes } from '@angular/router';
 import { ShellComponent } from './core/layout/shell.component';
+import { authGuard } from './core/services/auth.guard';
+
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'auth/login' },
+  // Главная всегда ведёт в приложение
+  { path: '', pathMatch: 'full', redirectTo: 'app' },
 
+  // Авторизация (доступна всем)
   {
     path: 'auth',
     children: [
-      { path: 'login', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent) },
-      { path: 'register', loadComponent: () => import('./features/auth/register.component').then(m => m.RegisterComponent) },
+      { path: 'login', loadComponent: () => import('./features/login/login.component').then(m => m.LoginComponent) },
+      { path: 'register', loadComponent: () => import('./features/register/register.component').then(m => m.RegisterComponent) },
     ],
   },
 
+  // Приложение (только для залогиненных)
   {
     path: 'app',
     component: ShellComponent,
+    canActivate: [authGuard],
     children: [
-      { path: '', loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+      { path: '', pathMatch: 'full', redirectTo: 'notes' },
       { path: 'notes', loadComponent: () => import('./features/notes/notes.component').then(m => m.NotesComponent) },
-      { path: 'weekly', loadComponent: () => import('./features/weekly/weekly.component').then(m => m.WeeklyComponent) }
+      { path: 'weekly', loadComponent: () => import('./features/weekly/weekly.component').then(m => m.WeeklyComponent) },
     ],
   },
 
-  { path: '**', redirectTo: 'app' },
+  // всё остальное на главную
+  { path: '**', redirectTo: '' },
 ];

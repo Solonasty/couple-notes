@@ -1,0 +1,31 @@
+<div class="wrap">
+    <mat-card class="card">
+      <mat-card-title>Регистрация</mat-card-title>
+  
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" autocomplete="email" />
+        </mat-form-field>
+  
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Пароль</mat-label>
+          <input matInput type="password" formControlName="password" autocomplete="new-password" />
+        </mat-form-field>
+  
+        @if (error()) {
+          <div class="error">{{ error() }}</div>
+        }
+  
+        <button mat-raised-button color="primary" class="full"
+                type="submit" [disabled]="form.invalid || loading()">
+          Создать аккаунт
+        </button>
+      </form>
+  
+      <div class="links">
+        Уже есть аккаунт? <a routerLink="/auth/login">Войти</a>
+      </div>
+    </mat-card>
+  </div>
+  

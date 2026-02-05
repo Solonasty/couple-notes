@@ -1,5 +1,7 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,13 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDividerModule } from '@angular/material/divider';
-import { DatePipe } from '@angular/common';
-
-type Note = {
-  id: string;
-  text: string;
-  createdAt: number;
-};
+import { Note, NotesService } from '../../core/services/notes.service';
 
 @Component({
   standalone: true,
@@ -33,47 +29,34 @@ type Note = {
 })
 export class NotesComponent {
   private fb = new FormBuilder();
+  private notesService = inject(NotesService);
 
   readonly isAdding = signal(false);
 
-  readonly notes = signal<Note[]>([]);
-  readonly notesCount = computed(() => this.notes().length);
+  // Список заметок — signal из Firestore
+  readonly notes = toSignal(this.notesService.notes$(), { initialValue: [] as Note[] });
+  readonly notesCount = computed(() => (this.notes() ?? []).length);
+
 
   readonly form = this.fb.nonNullable.group({
     text: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(5000)]],
   });
 
-  openAdd() {
-    this.isAdding.set(true);
-    this.form.reset({ text: '' });
-  }
+  openAdd() { this.isAdding.set(true); this.form.reset({ text: '' }); }
+  cancelAdd() { this.isAdding.set(false); this.form.reset({ text: '' }); }
 
-  cancelAdd() {
-    this.isAdding.set(false);
-    this.form.reset({ text: '' });
-  }
-
-  addNote() {
+  async addNote() {
     if (this.form.invalid) return;
-
     const text = this.form.getRawValue().text.trim();
     if (!text) return;
 
-    const note: Note = {
-      id: crypto.randomUUID(),
-      text,
-      createdAt: Date.now(),
-    };
-
-    // добавляем сверху (последняя заметка первой)
-    this.notes.update(list => [note, ...list]);
+    await this.notesService.add(text);
 
     this.isAdding.set(false);
     this.form.reset({ text: '' });
   }
 
-  deleteNote(id: string) {
-    this.notes.update(list => list.filter(n => n.id !== id));
+  async deleteNote(id: string) {
+    await this.notesService.remove(id);
   }
-
 }
