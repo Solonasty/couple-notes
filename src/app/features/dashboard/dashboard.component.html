@@ -1,35 +1,5 @@
 <mat-card>
   <mat-card-content>
-    <h3>Приглашения в пару</h3>
-
-    @if (incomingInvites().length === 0) {
-      <p>Нет приглашений</p>
-    } @else {
-      @for (inv of incomingInvites(); track inv.id) {
-        <div style="display:flex; gap:12px; align-items:center; margin:8px 0;">
-          <div style="flex:1;">
-            От: <b>{{ inv.fromEmail }}</b>
-          </div>
-
-          <button mat-raised-button color="primary"
-                  [disabled]="saving()"
-                  (click)="acceptInvite(inv.id)">
-            Принять
-          </button>
-
-          <button mat-button
-                  [disabled]="saving()"
-                  (click)="declineInvite(inv.id)">
-            Отклонить
-          </button>
-        </div>
-      }
-    }
-  </mat-card-content>
-</mat-card>
-
-<mat-card>
-  <mat-card-content>
 
     @if (error()) { <div class="error">{{ error() }}</div> }
     @if (ok()) { <div class="ok">{{ ok() }}</div> }
@@ -46,7 +16,9 @@
         Email: <b>{{ user()?.email }}</b>
       </div>
 
-      <button mat-raised-button color="primary" type="submit" [disabled]="profileForm.invalid || saving()">
+      <button mat-raised-button color="primary"
+              type="submit"
+              [disabled]="profileForm.invalid || saving()">
         Сохранить имя
       </button>
     </form>
@@ -57,15 +29,17 @@
     <form [formGroup]="emailForm" (ngSubmit)="changeEmail()">
       <mat-form-field appearance="outline" class="full">
         <mat-label>Новый email</mat-label>
-        <input matInput formControlName="newEmail" autocomplete="email" />
+        <input matInput formControlName="newEmail" />
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full">
         <mat-label>Текущий пароль</mat-label>
-        <input matInput type="password" formControlName="currentPassword" autocomplete="current-password" />
+        <input matInput type="password" formControlName="currentPassword" />
       </mat-form-field>
 
-      <button mat-raised-button color="primary" type="submit" [disabled]="emailForm.invalid || saving()">
+      <button mat-raised-button color="primary"
+              type="submit"
+              [disabled]="emailForm.invalid || saving()">
         Обновить email
       </button>
     </form>
@@ -76,30 +50,18 @@
     <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
       <mat-form-field appearance="outline" class="full">
         <mat-label>Текущий пароль</mat-label>
-        <input matInput type="password" formControlName="currentPassword" autocomplete="current-password" />
+        <input matInput type="password" formControlName="currentPassword" />
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full">
         <mat-label>Новый пароль</mat-label>
-        <input matInput type="password" formControlName="newPassword" autocomplete="new-password" />
+        <input matInput type="password" formControlName="newPassword" />
       </mat-form-field>
 
-      <button mat-raised-button color="primary" type="submit" [disabled]="passwordForm.invalid || saving()">
+      <button mat-raised-button color="primary"
+              type="submit"
+              [disabled]="passwordForm.invalid || saving()">
         Обновить пароль
-      </button>
-    </form>
-
-    <hr style="margin: 16px 0;" />
-
-    <h3>Пара</h3>
-    <form [formGroup]="pairForm" (ngSubmit)="addPair()">
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>Email партнёра</mat-label>
-        <input matInput formControlName="partnerEmail" autocomplete="email" />
-      </mat-form-field>
-
-      <button mat-raised-button color="primary" type="submit" [disabled]="pairForm.invalid || saving()">
-        Добавить пару
       </button>
     </form>
 

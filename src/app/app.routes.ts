@@ -26,6 +26,8 @@ export const routes: Routes = [
       { path: 'notes', loadComponent: () => import('./features/notes/notes.component').then(m => m.NotesComponent) },
       { path: 'weekly', loadComponent: () => import('./features/weekly/weekly.component').then(m => m.WeeklyComponent) },
       { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+      { path: 'pair', loadComponent: () => import('./features/pair/pair.component').then(m => m.PairComponent) },
+
     ],
   },
 
