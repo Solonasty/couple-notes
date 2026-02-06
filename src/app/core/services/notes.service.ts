@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Firestore, collection, collectionData, doc, addDoc, deleteDoc, query, orderBy } from '@angular/fire/firestore';
-import { Timestamp, serverTimestamp } from 'firebase/firestore';
+import { Timestamp, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { Observable, of, switchMap } from 'rxjs';
 import { AuthService } from './auth.service';
 
@@ -34,6 +34,14 @@ export class NotesService {
     const uid = this.auth.uid();
     if (!uid) throw new Error('Not authenticated');
     return addDoc(this.col(uid), { text, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  }
+
+  async update(id: string, text: string) {
+    const uid = this.auth.uid();
+    if (!uid) throw new Error('Not authenticated');
+
+    const ref = doc(this.fs, `users/${uid}/notes/${id}`);
+    return updateDoc(ref, { text, updatedAt: serverTimestamp() });
   }
 
   async remove(id: string) {

@@ -56,6 +56,33 @@ export class NotesComponent {
     this.form.reset({ text: '' });
   }
 
+  readonly editingId = signal<string | null>(null);
+
+readonly editForm = this.fb.nonNullable.group({
+  text: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(5000)]],
+});
+
+startEdit(note: Note) {
+  this.editingId.set(note.id);
+  this.editForm.reset({ text: note.text });
+}
+
+cancelEdit() {
+  this.editingId.set(null);
+  this.editForm.reset({ text: '' });
+}
+
+async saveEdit(noteId: string) {
+  if (this.editForm.invalid) return;
+  const text = this.editForm.getRawValue().text.trim();
+  if (!text) return;
+
+  await this.notesService.update(noteId, text);
+  this.cancelEdit();
+}
+
+
+
   async deleteNote(id: string) {
     await this.notesService.remove(id);
   }

@@ -1,80 +1,111 @@
 <!-- Верхняя панель -->
 <div class="top-bar">
-    <div class="title">
-      <span>Заметки</span>
-      <span class="count">({{ notesCount() }})</span>
-    </div>
+  <div class="title">
+    <span>Заметки</span>
+    <span class="count">({{ notesCount() }})</span>
+  </div>
 
-    @if (!isAdding()) {
-      <button mat-raised-button color="primary" (click)="openAdd()">
-        <mat-icon class="material-symbols-outlined">add</mat-icon>
-        Добавить
-      </button>
-    }
+  @if (!isAdding()) {
+    <button mat-raised-button color="primary" (click)="openAdd()">
+      <mat-icon class="material-symbols-outlined">add</mat-icon>
+      Добавить
+    </button>
+  }
 </div>
 
-  <!-- Карточка добавления заметки -->
-  @if (isAdding()) {
-    <mat-card class="add-card" animate.enter="note-enter"
-    >
-      <mat-card-title>Новая заметка</mat-card-title>
+<!-- Карточка добавления заметки -->
+@if (isAdding()) {
+  <mat-card class="add-card" animate.enter="note-enter">
+    <mat-card-title>Новая заметка</mat-card-title>
 
-      <mat-card-content>
-        <form class="add-form" [formGroup]="form" (ngSubmit)="addNote()">
-          <mat-form-field appearance="outline" class="full">
-            <mat-label>Текст заметки</mat-label>
-            <textarea
-              matInput
-              rows="4"
-              formControlName="text"
-              placeholder="Напишите заметку…"
-            ></textarea>
-            <mat-hint align="end">
-              {{ form.controls.text.value.length }} / 5000
-            </mat-hint>
-          </mat-form-field>
-
-          <div class="actions">
-            <button mat-button type="button" (click)="cancelAdd()">Отмена</button>
-            <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
-              Сохранить
-            </button>
-          </div>
-        </form>
-      </mat-card-content>
-    </mat-card>
-  }
-
-  <!-- Карточка списка заметок -->
-  <mat-card>
     <mat-card-content>
-      @if (notes().length === 0) {
-        <p class="empty">Пока нет заметок. Нажмите «Добавить».</p>
-      } @else {
-        <div class="list">
-          @for (n of notes(); track n.id) {
-            <mat-card class="note" animate.enter="panel-enter"
-            animate.leave="panel-leave">
-              <mat-card-content>
-                <div class="note-header">
-                  <div class="note-date">
-                    {{ n.createdAt?.toDate?.() | date:'dd.MM.yyyy, HH:mm' }}
-                  </div>
+      <form class="add-form" [formGroup]="form" (ngSubmit)="addNote()">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Текст заметки</mat-label>
+          <textarea
+            matInput
+            rows="4"
+            formControlName="text"
+            placeholder="Напишите заметку…"
+          ></textarea>
+          <mat-hint align="end">
+            {{ form.controls.text.value.length }} / 5000
+          </mat-hint>
+        </mat-form-field>
+
+        <div class="actions">
+          <button mat-button type="button" (click)="cancelAdd()">Отмена</button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
+            Сохранить
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+}
+
+<!-- Карточка списка заметок -->
+<mat-card>
+  <mat-card-content>
+    @if (notes().length === 0) {
+      <p class="empty">Пока нет заметок. Нажмите «Добавить».</p>
+    } @else {
+      <div class="list">
+        @for (n of notes(); track n.id) {
+          <mat-card class="note" animate.enter="panel-enter" animate.leave="panel-leave">
+            <mat-card-content>
+              <div class="note-header">
+                <div class="note-date">
+                  {{ n.createdAt?.toDate?.() | date:'dd.MM.yyyy, HH:mm' }}
+                </div>
+
+                <div class="note-actions">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    (click)="startEdit(n)"
+                    aria-label="Edit note"
+                    [disabled]="editingId() && editingId() !== n.id"
+                  >
+                    <mat-icon class="material-symbols-outlined">edit</mat-icon>
+                  </button>
 
                   <button
                     mat-icon-button
+                    type="button"
                     (click)="deleteNote(n.id)"
                     aria-label="Delete note"
+                    [disabled]="editingId() === n.id"
                   >
                     <mat-icon class="material-symbols-outlined">delete</mat-icon>
                   </button>
                 </div>
+              </div>
 
+              @if (editingId() === n.id) {
+                <form [formGroup]="editForm" (ngSubmit)="saveEdit(n.id)">
+                  <mat-form-field appearance="outline" class="full">
+                    <mat-label>Редактировать заметку</mat-label>
+                    <textarea matInput rows="4" formControlName="text"></textarea>
+                    <mat-hint align="end">
+                      {{ editForm.controls.text.value.length }} / 5000
+                    </mat-hint>
+                  </mat-form-field>
+
+                  <div class="actions">
+                    <button mat-button type="button" (click)="cancelEdit()">Отмена</button>
+                    <button mat-raised-button color="primary" type="submit" [disabled]="editForm.invalid">
+                      Сохранить
+                    </button>
+                  </div>
+                </form>
+              } @else {
                 <div class="note-text">{{ n.text }}</div>
-              </mat-card-content>
-            </mat-card>
-          }
-        </div>
-      }
-    </mat-card-content>
-  </mat-card>
+              }
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    }
+  </mat-card-content>
+</mat-card>

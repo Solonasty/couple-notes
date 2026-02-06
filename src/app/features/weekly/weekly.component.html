@@ -1,1 +1,23 @@
-<p>weekly works!</p>
+<h2>Сводка недели</h2>
+
+<button mat-raised-button color="primary"
+        (click)="generate()"
+        [disabled]="loading()">
+  Получить сводку
+</button>
+
+@if (loading()) {
+  <p>Генерация...</p>
+}
+
+@if (error()) {
+  <p class="error">{{ error() }}</p>
+}
+
+@if (summary()) {
+  <mat-card>
+    <mat-card-content>
+      <pre>{{ summary() }}</pre>
+    </mat-card-content>
+  </mat-card>
+}

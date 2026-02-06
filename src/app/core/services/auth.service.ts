@@ -7,7 +7,7 @@ import {
   User,
 } from 'firebase/auth';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { shareReplay } from 'rxjs';
+import { filter, firstValueFrom, shareReplay, take } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -26,7 +26,8 @@ export class AuthService {
   }
 
   async signIn(email: string, password: string) {
-    return signInWithEmailAndPassword(this.auth, email, password);
+    await signInWithEmailAndPassword(this.auth, email, password);
+    await firstValueFrom(this.user$.pipe(filter(Boolean), take(1)));
   }
 
   async logout() {
