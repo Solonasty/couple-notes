@@ -20,6 +20,9 @@ export type PairInvite = {
 export type PairDoc = {
   members: string[];
   createdAt?: unknown;
+  status?: 'active' | 'ended';
+  endedAt?: unknown;
+  endedBy?: string;
 };
 
 export type PairInviteDoc = PairInvite & { id: string };

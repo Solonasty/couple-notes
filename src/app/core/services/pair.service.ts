@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { Firestore, collection, doc, getDocs, query, runTransaction, serverTimestamp, setDoc, where } from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
 import { PairInvite } from './pair.types';
+import { getDoc, updateDoc } from '@angular/fire/firestore';
+
 
 @Injectable({ providedIn: 'root' })
 export class PairService {
@@ -147,5 +149,85 @@ export class PairService {
         updatedAt: serverTimestamp(),
       });
     });
+  }
+
+  async breakPair(): Promise<void> {
+    const me = this.auth.user();
+    if (!me) throw new Error('Вы не авторизованы');
+
+    const myRef = doc(this.fs, `users/${me.uid}`);
+    const mySnap = await getDoc(myRef);
+    const pairId = (mySnap.data() as any)?.pairId ?? null;
+
+    if (!pairId) throw new Error('Вы не состоите в паре');
+
+    const pairRef = doc(this.fs, `pairs/${pairId}`);
+
+    await runTransaction(this.fs, async (tx) => {
+      const pairSnap = await tx.get(pairRef);
+      if (!pairSnap.exists()) {
+        // если пары нет — просто чистим профиль
+        tx.set(myRef, {
+          pairId: null,
+          partnerUid: null,
+          partnerEmail: null,
+          updatedAt: serverTimestamp(),
+        }, { merge: true });
+        return;
+      }
+
+      const pair = pairSnap.data() as any;
+      const members: string[] = pair?.members ?? [];
+      if (!members.includes(me.uid)) throw new Error('Нет доступа к этой паре');
+
+      // помечаем пару завершённой (members не трогаем)
+      tx.update(pairRef, {
+        status: 'ended',
+        endedAt: serverTimestamp(),
+        endedBy: me.uid,
+      });
+
+      // чистим ТОЛЬКО свой профиль
+      tx.set(myRef, {
+        pairId: null,
+        partnerUid: null,
+        partnerEmail: null,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    });
+  }
+
+  async syncEndedPairOnOpen(pairId: string): Promise<void> {
+    const me = this.auth.user();
+    if (!me) return;
+
+    const myRef = doc(this.fs, `users/${me.uid}`);
+    const pairRef = doc(this.fs, `pairs/${pairId}`);
+
+    const pairSnap = await getDoc(pairRef);
+
+    // если пары нет — считаем что она неактуальна и чистим профиль
+    if (!pairSnap.exists()) {
+      await setDoc(myRef, {
+        pairId: null,
+        partnerUid: null,
+        partnerEmail: null,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+      return;
+    }
+
+    const pair = pairSnap.data() as any;
+
+    const ended = pair?.status === 'ended' || !!pair?.endedAt;
+    if (!ended) return;
+
+    // чистим только свой профиль
+    await setDoc(myRef, {
+      pairId: null,
+      partnerUid: null,
+      partnerEmail: null,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
   }
 }

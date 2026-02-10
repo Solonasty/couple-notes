@@ -35,6 +35,7 @@ export class PairComponent {
   private fs = inject(Firestore);
   private auth = inject(AuthService);
   private pair = inject(PairService);
+  private checkedPairId: string | null = null;
 
   private processed = new Set<string>();
   private lastUid: string | null = null;
@@ -63,6 +64,20 @@ export class PairComponent {
     { initialValue: null }
   );
 
+  readonly canShowInviteForm = computed(() => {
+    // если уже в паре — форму не показываем
+    if (this.myProfile()?.pairId) return false;
+
+    // если есть исходящее pending — форму не показываем
+    if (this.outgoingInvites().length > 0) return false;
+
+    // если есть входящее pending — форму не показываем
+    if (this.incomingInvites().length > 0) return false;
+
+    // declined сюда не попадает (ты смотришь только pending) → значит форму показываем ✅
+    return true;
+  });
+
   pairForm = this.fb.nonNullable.group({
     partnerEmail: ['', [Validators.required, Validators.email]],
   });
@@ -84,6 +99,24 @@ export class PairComponent {
           this.error.set(e instanceof Error ? e.message : 'Ошибка синхронизации пары');
         });
       }
+    });
+
+    effect(() => {
+      const uid = this.uid();
+      const pairId = this.myProfile()?.pairId ?? null;
+
+      if (!uid || !pairId) {
+        this.checkedPairId = null;
+        return;
+      }
+
+      // чтобы не дергать getDoc каждый пересчет
+      if (this.checkedPairId === pairId) return;
+      this.checkedPairId = pairId;
+
+      void this.pair.syncEndedPairOnOpen(pairId).catch((e) => {
+        this.error.set(e instanceof Error ? e.message : 'Ошибка синхронизации пары');
+      });
     });
   }
 
@@ -149,6 +182,21 @@ export class PairComponent {
       this.ok.set('Приглашение отклонено');
     } catch (e: unknown) {
       this.error.set(e instanceof Error ? e.message : 'Ошибка отклонения');
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  async breakPair() {
+    this.error.set(null);
+    this.ok.set(null);
+
+    this.saving.set(true);
+    try {
+      await this.pair.breakPair();
+      this.ok.set('Пара разорвана');
+    } catch (e: unknown) {
+      this.error.set(e instanceof Error ? e.message : 'Ошибка разрыва пары');
     } finally {
       this.saving.set(false);
     }

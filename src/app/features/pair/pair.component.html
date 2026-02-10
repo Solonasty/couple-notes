@@ -6,6 +6,12 @@
       <p style="margin: 8px 0;">
         Вы в паре с: <b>{{ myProfile()?.partnerEmail ?? myProfile()?.partnerUid }}</b>
       </p>
+
+      <button mat-raised-button color="warn"
+              [disabled]="saving()"
+              (click)="breakPair()">
+        Разорвать пару
+      </button>
     } @else {
       <p style="margin: 8px 0;">Вы пока не в паре</p>
     }
@@ -57,18 +63,25 @@
 
     <hr style="margin: 16px 0;" />
 
-    <h4>Пригласить партнёра</h4>
-    <form [formGroup]="pairForm" (ngSubmit)="createInvite()">
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>Email партнёра</mat-label>
-        <input matInput formControlName="partnerEmail" autocomplete="email" />
-      </mat-form-field>
+    @if (canShowInviteForm()) {
+      <h4>Пригласить партнёра</h4>
+      <form [formGroup]="pairForm" (ngSubmit)="createInvite()">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Email партнёра</mat-label>
+          <input matInput formControlName="partnerEmail" autocomplete="email" />
+        </mat-form-field>
 
-      <button mat-raised-button color="primary"
-              type="submit"
-              [disabled]="pairForm.invalid || saving()">
-        Отправить приглашение
-      </button>
-    </form>
+        <button mat-raised-button color="primary"
+                type="submit"
+                [disabled]="pairForm.invalid || saving()">
+          Отправить приглашение
+        </button>
+      </form>
+    } @else {
+      <p style="margin: 8px 0;">
+        Форма приглашения скрыта, потому что у вас есть активная пара или активное приглашение.
+        (Если приглашение отклонено — форма появится автоматически.)
+      </p>
+    }
   </mat-card-content>
 </mat-card>
