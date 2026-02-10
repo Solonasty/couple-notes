@@ -1,27 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { Firestore, collection, doc, getDocs, query, runTransaction, serverTimestamp, setDoc, where } from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
-
-type PairInvite = {
-  pairId: string;
-  fromUid: string;
-  toUid: string;
-  fromEmail: string;
-  toEmail: string;
-  status: 'pending' | 'accepted' | 'declined';
-  createdAt?: any;
-  acceptedAt?: any;
-};
+import { PairInvite } from './pair.types';
 
 @Injectable({ providedIn: 'root' })
 export class PairService {
   private fs = inject(Firestore);
   private auth = inject(AuthService);
 
-  /**
-   * Создаём приглашение партнёру по email.
-   * НЕ читаем и НЕ пишем users/{partnerUid} (это запрещено rules и небезопасно).
-   */
   async createPairByEmail(partnerEmailRaw: string): Promise<void> {
     const me = this.auth.user();
     if (!me) throw new Error('Вы не авторизованы');
@@ -66,10 +52,6 @@ export class PairService {
     await setDoc(inviteRef, invite, { merge: true });
   }
 
-  /**
-   * Принять приглашение (это делает получатель).
-   * Пишем pairId только в СВОЙ users/{uid} — это разрешено rules.
-   */
   async acceptInvite(inviteId: string): Promise<void> {
     const me = this.auth.user();
     if (!me) throw new Error('Вы не авторизованы');
@@ -102,6 +84,8 @@ export class PairService {
       // записываем pairId только себе
       tx.update(myRef, {
         pairId: inv.pairId,
+        partnerUid: inv.fromUid,
+        partnerEmail: inv.fromEmail,
         updatedAt: serverTimestamp(),
       });
 
@@ -113,9 +97,6 @@ export class PairService {
     });
   }
 
-  /**
-   * (Опционально) Отклонить приглашение
-   */
   async declineInvite(inviteId: string): Promise<void> {
     const me = this.auth.user();
     if (!me) throw new Error('Вы не авторизованы');
@@ -131,6 +112,40 @@ export class PairService {
       if (inv.status !== 'pending') throw new Error('Приглашение уже обработано');
 
       tx.update(inviteRef, { status: 'declined' });
+    });
+  }
+
+  async attachAcceptedInviteAsSender(inviteId: string): Promise<void> {
+    const me = this.auth.user();
+    if (!me) throw new Error('Вы не авторизованы');
+
+    const inviteRef = doc(this.fs, `pairInvites/${inviteId}`);
+    const myRef = doc(this.fs, `users/${me.uid}`);
+
+    await runTransaction(this.fs, async (tx) => {
+      const invSnap = await tx.get(inviteRef);
+      if (!invSnap.exists()) return;
+
+      const inv = invSnap.data() as PairInvite;
+
+      // только отправитель
+      if (inv.fromUid !== me.uid) return;
+
+      // интересует только accepted
+      if (inv.status !== 'accepted') return;
+
+      const mySnap = await tx.get(myRef);
+      if (!mySnap.exists()) throw new Error('Ваш профиль users/{uid} не найден');
+
+      const myPairId = (mySnap.data() as any)?.pairId ?? null;
+      if (myPairId) return; // уже в паре
+
+      tx.update(myRef, {
+        pairId: inv.pairId,
+        partnerUid: inv.toUid,
+        partnerEmail: inv.toEmail,
+        updatedAt: serverTimestamp(),
+      });
     });
   }
 }

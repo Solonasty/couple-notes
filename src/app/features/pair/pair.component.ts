@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Firestore, collection, collectionData, query, where } from '@angular/fire/firestore';
 import { MatCardModule } from '@angular/material/card';
@@ -10,17 +10,10 @@ import { Observable, of, switchMap, startWith } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
 import { PairService } from '../../core/services/pair.service';
+import { PairInvite, UserProfile } from '../../core/services/pair.types';
 
-type PairInvite = {
-  pairId: string;
-  fromUid: string;
-  toUid: string;
-  fromEmail: string;
-  toEmail: string;
-  status: 'pending' | 'accepted' | 'declined';
-  createdAt?: unknown;
-  acceptedAt?: unknown;
-};
+import { doc, docData } from '@angular/fire/firestore';
+import { map } from 'rxjs/operators';
 
 type PairInviteDoc = PairInvite & { id: string };
 
@@ -36,11 +29,15 @@ type PairInviteDoc = PairInvite & { id: string };
   ],
   templateUrl: './pair.component.html',
 })
+
 export class PairComponent {
   private fb = inject(FormBuilder);
   private fs = inject(Firestore);
   private auth = inject(AuthService);
   private pair = inject(PairService);
+
+  private processed = new Set<string>();
+  private lastUid: string | null = null;
 
   readonly user = this.auth.user;
   readonly uid = computed(() => this.user()?.uid ?? null);
@@ -49,23 +46,65 @@ export class PairComponent {
   readonly error = signal<string | null>(null);
   readonly ok = signal<string | null>(null);
 
+  readonly incomingInvites = this.invitesSignal('toUid', 'pending');
+  readonly outgoingInvites = this.invitesSignal('fromUid', 'pending');
+  readonly acceptedSentInvites = this.invitesSignal('fromUid', 'accepted');
+
+  readonly myProfile = toSignal<UserProfile | null>(
+    (toObservable(this.uid) as Observable<string | null>).pipe(
+      switchMap((uid) => {
+        if (!uid) return of(null);
+        const ref = doc(this.fs, `users/${uid}`);
+        return (docData(ref) as Observable<UserProfile>).pipe(
+          map((p) => p ?? null)
+        );
+      })
+    ),
+    { initialValue: null }
+  );
+
   pairForm = this.fb.nonNullable.group({
     partnerEmail: ['', [Validators.required, Validators.email]],
   });
 
-  readonly incomingInvites = toSignal<PairInviteDoc[]>(
-    (toObservable(this.uid) as Observable<string | null>).pipe(
-      switchMap((uid): Observable<PairInviteDoc[]> => {
-        if (!uid) return of([] as PairInviteDoc[]);
-        const colRef = collection(this.fs, 'pairInvites');
-        const q = query(colRef, where('toUid', '==', uid), where('status', '==', 'pending'));
-        return (collectionData(q, { idField: 'id' }) as unknown as Observable<PairInviteDoc[]>)
-          .pipe(startWith([] as PairInviteDoc[]));
-      }),
-      startWith([] as PairInviteDoc[])
-    ),
-    { requireSync: true }
-  );
+  constructor() {
+    effect(() => {
+      const uid = this.uid();
+      if (uid !== this.lastUid) {
+        this.processed.clear();
+        this.lastUid = uid;
+      }
+      if (!uid) return;
+
+      for (const inv of this.acceptedSentInvites()) {
+        if (this.processed.has(inv.id)) continue;
+        this.processed.add(inv.id);
+
+        void this.pair.attachAcceptedInviteAsSender(inv.id).catch((e) => {
+          this.error.set(e instanceof Error ? e.message : 'Ошибка синхронизации пары');
+        });
+      }
+    });
+  }
+
+  private invitesSignal(
+    field: 'toUid' | 'fromUid',
+    status: PairInvite['status']
+  ) {
+    const s = toSignal<PairInviteDoc[]>(
+      (toObservable(this.uid) as Observable<string | null>).pipe(
+        switchMap((uid) => {
+          if (!uid) return of([] as PairInviteDoc[]);
+          const colRef = collection(this.fs, 'pairInvites');
+          const q = query(colRef, where(field, '==', uid), where('status', '==', status));
+          return collectionData(q, { idField: 'id' }) as Observable<PairInviteDoc[]>;
+        }),
+        startWith([] as PairInviteDoc[])
+      ),
+      { requireSync: true }
+    );
+    return computed(() => s() ?? []);
+  }
 
   async createInvite() {
     this.error.set(null);
