@@ -1,20 +1,11 @@
 import { Injectable, inject } from '@angular/core';
-import {
-  Firestore,
-  collection,
-  collectionData,
-  doc,
-  docData,
-  query,
-  orderBy,
-  where,
-} from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, doc, query, orderBy, where } from '@angular/fire/firestore';
 import { addDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { Observable, of, switchMap, map, catchError, shareReplay } from 'rxjs';
-import { firstValueFrom } from 'rxjs';
-import { filter, take } from 'rxjs/operators';
+import { Observable, of, switchMap, map, shareReplay, combineLatest, firstValueFrom, filter, take } from 'rxjs';
+
 import { AuthService } from './auth.service';
-import { Note, UserProfile, PairDoc } from './pair.types';
+import { PairContextService } from './pair-context.service';
+import { Note } from './pair.types';
 
 type NotesContext =
   | { mode: 'none' }
@@ -31,51 +22,26 @@ function isUserCtx(ctx: NotesContext): ctx is UserNotesContext {
 export class NotesService {
   private fs = inject(Firestore);
   private auth = inject(AuthService);
+  private pairCtx = inject(PairContextService);
 
-  private profile$(uid: string): Observable<UserProfile | null> {
-    return docData(doc(this.fs, `users/${uid}`)) as unknown as Observable<UserProfile>;
-  }
-
-  private pair$(pairId: string): Observable<PairDoc | null> {
-    return docData(doc(this.fs, `pairs/${pairId}`)) as unknown as Observable<PairDoc>;
-  }
-
-  private ctx$ = this.auth.user$.pipe(
-    switchMap(user => {
-      if (!user) return of({ mode: 'none' } as NotesContext);
-
-      return this.profile$(user.uid).pipe(
-        switchMap(profile => {
-          const pairId = profile?.pairId ?? null;
-          if (!pairId) return of({ mode: 'solo', uid: user.uid } as NotesContext);
-
-          return this.pair$(pairId).pipe(
-            map(pair => {
-              const ok =
-                pair?.status === 'active' &&
-                Array.isArray(pair?.members) &&
-                pair!.members.includes(user.uid);
-
-              return ok
-                ? ({ mode: 'pair', uid: user.uid, pairId } as NotesContext)
-                : ({ mode: 'solo', uid: user.uid } as NotesContext);
-            }),
-            catchError(() => of({ mode: 'solo', uid: user.uid } as NotesContext))
-          );
-        })
-      );
+  // ✅ Источник правды: pairs (activePair$), а не users.pairId
+  private ctx$ = combineLatest([this.auth.user$, this.pairCtx.activePair$]).pipe(
+    map(([user, activePair]): NotesContext => {
+      if (!user) return { mode: 'none' };
+      if (activePair) return { mode: 'pair', uid: user.uid, pairId: activePair.id };
+      return { mode: 'solo', uid: user.uid };
     }),
-    shareReplay(1)
+    shareReplay({ bufferSize: 1, refCount: true })
   );
 
   private async getCtx(): Promise<UserNotesContext> {
     return firstValueFrom(this.ctx$.pipe(filter(isUserCtx), take(1)));
   }
 
-  private notesCollection(ctx: NotesContext) {
-    if (ctx.mode === 'pair') return collection(this.fs, `pairs/${ctx.pairId}/notes`);
-    if (ctx.mode === 'solo') return collection(this.fs, `users/${ctx.uid}/notes`);
-    throw new Error('Not authenticated');
+  private notesCollection(ctx: UserNotesContext) {
+    return ctx.mode === 'pair'
+      ? collection(this.fs, `pairs/${ctx.pairId}/notes`)
+      : collection(this.fs, `users/${ctx.uid}/notes`);
   }
 
   notes$(): Observable<Note[]> {
@@ -83,15 +49,13 @@ export class NotesService {
       switchMap(ctx => {
         if (ctx.mode === 'none') return of([] as Note[]);
 
-        // фильтруем по ownerUid
+        const colRef = this.notesCollection(ctx);
+
+        // ✅ в паре — всегда только свои заметки
         const q =
           ctx.mode === 'pair'
-            ? query(
-                this.notesCollection(ctx),
-                where('ownerUid', '==', ctx.uid),
-                orderBy('updatedAt', 'desc')
-              )
-            : query(this.notesCollection(ctx), orderBy('updatedAt', 'desc'));
+            ? query(colRef, where('ownerUid', '==', ctx.uid), orderBy('updatedAt', 'desc'))
+            : query(colRef, orderBy('updatedAt', 'desc'));
 
         return collectionData(q, { idField: 'id' }) as unknown as Observable<Note[]>;
       })

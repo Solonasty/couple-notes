@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDividerModule } from '@angular/material/divider';
 import { NotesService } from '../../core/services/notes.service';
 import { Note } from '../../core/services/pair.types';
+import { PairContextService } from '../../core/services/pair-context.service';
 
 @Component({
   standalone: true,
@@ -30,7 +31,10 @@ import { Note } from '../../core/services/pair.types';
 export class NotesComponent {
   private fb = new FormBuilder();
   private notesService = inject(NotesService);
+  private pairCtx = inject(PairContextService);
 
+readonly activePair = toSignal(this.pairCtx.activePair$, { initialValue: null });
+readonly inPair = computed(() => !!this.activePair());
   readonly isAdding = signal(false);
   readonly notes = toSignal(this.notesService.notes$(), { initialValue: [] as Note[] });
   readonly notesCount = computed(() => (this.notes() ?? []).length);

@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { PairProfileSyncService } from './core/services/pair-profile-sync.service';
 
 @Component({
   standalone: true,
@@ -7,4 +8,13 @@ import { RouterOutlet } from '@angular/router';
   imports: [RouterOutlet],
   templateUrl: './app.component.html',
 })
-export class AppComponent {}
+
+export class AppComponent {
+  private pairSync = inject(PairProfileSyncService);
+
+  constructor() {
+    this.pairSync.init().subscribe({
+      error: (e) => console.error('Pair sync failed', e),
+    });
+  }
+}

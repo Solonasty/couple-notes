@@ -3,12 +3,25 @@ import { Firestore, collection, doc, getDocs, query, runTransaction, serverTimes
 import { AuthService } from './auth.service';
 import { PairInvite } from './pair.types';
 import { getDoc, updateDoc } from '@angular/fire/firestore';
+import { combineLatest, map, shareReplay } from 'rxjs';
+import { PairContextService } from './pair-context.service';
 
 
 @Injectable({ providedIn: 'root' })
 export class PairService {
   private fs = inject(Firestore);
   private auth = inject(AuthService);
+
+  private pairCtx = inject(PairContextService);
+
+private ctx$ = combineLatest([this.auth.user$, this.pairCtx.activePair$]).pipe(
+  map(([user, activePair]) => {
+    if (!user) return { mode: 'none' as const };
+    if (activePair) return { mode: 'pair' as const, uid: user.uid, pairId: activePair.id };
+    return { mode: 'solo' as const, uid: user.uid };
+  }),
+  shareReplay({ bufferSize: 1, refCount: true })
+);
 
   async createPairByEmail(partnerEmailRaw: string): Promise<void> {
     const me = this.auth.user();
