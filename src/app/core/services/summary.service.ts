@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { catchError, map, throwError, timeout } from 'rxjs';
 
 import { buildWeeklySummaryPrompt } from './summary-prompt';
-import { Note } from './notes.service';
+import { Note } from './pair.types';
 
 
 @Injectable({ providedIn: 'root' })

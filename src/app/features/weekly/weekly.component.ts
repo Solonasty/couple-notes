@@ -4,9 +4,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 
-import { NotesService, Note } from '../../core/services/notes.service';
+import { NotesService } from '../../core/services/notes.service';
 import { SummaryService } from '../../core/services/summary.service';
 import { firstValueFrom } from 'rxjs';
+import { Note } from '../../core/services/pair.types';
 
 @Component({
   standalone: true,

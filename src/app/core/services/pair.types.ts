@@ -1,3 +1,5 @@
+import { Timestamp } from "@angular/fire/firestore";
+
 export type UserProfile = {
   email?: string;
   name?: string;
@@ -26,3 +28,11 @@ export type PairDoc = {
 };
 
 export type PairInviteDoc = PairInvite & { id: string };
+
+export type Note = {
+  id: string;
+  text: string;
+  ownerUid: string;
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+};
