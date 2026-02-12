@@ -35,7 +35,6 @@ export class PairProfileSyncService {
         }).pipe(
           map(({ profile, activePair }) => ({ user, profile, activePair })),
 
-          // сравниваем только то, что влияет на синк (НЕ updatedAt)
           distinctUntilChanged((a, b) => {
             const aPair = a.activePair?.id ?? null;
             const bPair = b.activePair?.id ?? null;
@@ -48,8 +47,8 @@ export class PairProfileSyncService {
 
           switchMap(({ user, profile, activePair }) => {
             const currentPairId = profile?.pairId ?? null;
-          
-            // ✅ нет активной пары
+
+            // нет активной пары
             if (!activePair) {
               if (!currentPairId) return EMPTY;
               return from(updateDoc(myRef, {
@@ -59,18 +58,18 @@ export class PairProfileSyncService {
                 updatedAt: serverTimestamp(),
               }));
             }
-          
-            // ✅ активная пара есть
+
+            // активная пара есть
             const nextPairId = activePair.id;
             const partnerUid =
               (activePair.members || []).find((m: string) => m !== user.uid) ?? null;
-          
+
             const needUpdate =
               currentPairId !== nextPairId ||
               (profile?.partnerUid ?? null) !== partnerUid;
-          
+
             if (!needUpdate) return EMPTY;
-          
+
             if (!partnerUid) {
               return from(updateDoc(myRef, {
                 pairId: nextPairId,
@@ -79,7 +78,7 @@ export class PairProfileSyncService {
                 updatedAt: serverTimestamp(),
               }));
             }
-          
+
             const partnerPublicRef = doc(this.fs, `publicUsers/${partnerUid}`);
             return (docData(partnerPublicRef) as any).pipe(
               take(1),
@@ -93,7 +92,6 @@ export class PairProfileSyncService {
               )
             );
           })
-          
         );
       })
     );

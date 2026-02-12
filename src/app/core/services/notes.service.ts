@@ -1,5 +1,13 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, collectionData, doc, query, orderBy, where } from '@angular/fire/firestore';
+import {
+  Firestore,
+  collection,
+  collectionData,
+  doc,
+  query,
+  orderBy,
+  where,
+} from '@angular/fire/firestore';
 import { addDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { Observable, of, switchMap, map, shareReplay, combineLatest, firstValueFrom, filter, take } from 'rxjs';
 
@@ -7,15 +15,10 @@ import { AuthService } from './auth.service';
 import { PairContextService } from './pair-context.service';
 import { Note } from './pair.types';
 
-type NotesContext =
-  | { mode: 'none' }
-  | { mode: 'solo'; uid: string }
-  | { mode: 'pair'; uid: string; pairId: string };
+type PairNotesCtx = { uid: string; pairId: string };
 
-type UserNotesContext = Exclude<NotesContext, { mode: 'none' }>;
-
-function isUserCtx(ctx: NotesContext): ctx is UserNotesContext {
-  return ctx.mode !== 'none';
+function hasPair(ctx: PairNotesCtx | null): ctx is PairNotesCtx {
+  return !!ctx;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -24,38 +27,33 @@ export class NotesService {
   private auth = inject(AuthService);
   private pairCtx = inject(PairContextService);
 
-  // ✅ Источник правды: pairs (activePair$), а не users.pairId
+  // Контекст есть только когда пользователь авторизован и есть activePair
   private ctx$ = combineLatest([this.auth.user$, this.pairCtx.activePair$]).pipe(
-    map(([user, activePair]): NotesContext => {
-      if (!user) return { mode: 'none' };
-      if (activePair) return { mode: 'pair', uid: user.uid, pairId: activePair.id };
-      return { mode: 'solo', uid: user.uid };
+    map(([user, activePair]): PairNotesCtx | null => {
+      if (!user || !activePair) return null;
+      return { uid: user.uid, pairId: activePair.id };
     }),
     shareReplay({ bufferSize: 1, refCount: true })
   );
 
-  private async getCtx(): Promise<UserNotesContext> {
-    return firstValueFrom(this.ctx$.pipe(filter(isUserCtx), take(1)));
+  private async getCtx(): Promise<PairNotesCtx> {
+    return firstValueFrom(this.ctx$.pipe(filter(hasPair), take(1)));
   }
 
-  private notesCollection(ctx: UserNotesContext) {
-    return ctx.mode === 'pair'
-      ? collection(this.fs, `pairs/${ctx.pairId}/notes`)
-      : collection(this.fs, `users/${ctx.uid}/notes`);
+  private col(ctx: PairNotesCtx) {
+    return collection(this.fs, `pairs/${ctx.pairId}/notes`);
   }
 
   notes$(): Observable<Note[]> {
     return this.ctx$.pipe(
       switchMap(ctx => {
-        if (ctx.mode === 'none') return of([] as Note[]);
+        if (!ctx) return of([] as Note[]);
 
-        const colRef = this.notesCollection(ctx);
-
-        // ✅ в паре — всегда только свои заметки
-        const q =
-          ctx.mode === 'pair'
-            ? query(colRef, where('ownerUid', '==', ctx.uid), orderBy('updatedAt', 'desc'))
-            : query(colRef, orderBy('updatedAt', 'desc'));
+        const q = query(
+          this.col(ctx),
+          where('ownerUid', '==', ctx.uid),
+          orderBy('updatedAt', 'desc')
+        );
 
         return collectionData(q, { idField: 'id' }) as unknown as Observable<Note[]>;
       })
@@ -66,9 +64,9 @@ export class NotesService {
     const uid = this.auth.uid();
     if (!uid) throw new Error('Not authenticated');
 
-    const ctx = await this.getCtx();
+    const ctx = await this.getCtx(); // гарантирует, что есть пара
 
-    return addDoc(this.notesCollection(ctx), {
+    return addDoc(this.col(ctx), {
       text,
       ownerUid: uid,
       createdAt: serverTimestamp(),
@@ -82,12 +80,10 @@ export class NotesService {
 
     const ctx = await this.getCtx();
 
-    const path =
-      ctx.mode === 'pair'
-        ? `pairs/${ctx.pairId}/notes/${id}`
-        : `users/${ctx.uid}/notes/${id}`;
-
-    return updateDoc(doc(this.fs, path), { text, updatedAt: serverTimestamp() });
+    return updateDoc(doc(this.fs, `pairs/${ctx.pairId}/notes/${id}`), {
+      text,
+      updatedAt: serverTimestamp(),
+    });
   }
 
   async remove(id: string) {
@@ -96,11 +92,6 @@ export class NotesService {
 
     const ctx = await this.getCtx();
 
-    const path =
-      ctx.mode === 'pair'
-        ? `pairs/${ctx.pairId}/notes/${id}`
-        : `users/${ctx.uid}/notes/${id}`;
-
-    return deleteDoc(doc(this.fs, path));
+    return deleteDoc(doc(this.fs, `pairs/${ctx.pairId}/notes/${id}`));
   }
 }

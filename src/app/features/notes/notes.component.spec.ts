@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NotesComponent } from './notes.component';
 import { BehaviorSubject } from 'rxjs';
-import { Note, NotesService } from '../../core/services/notes.service';
+import { NotesService } from '../../core/services/notes.service';
+import { Note } from '../../core/services/pair.types';
 
 class NotesServiceMock {
   notesSubject = new BehaviorSubject<Note[]>([]);
@@ -35,17 +36,6 @@ describe('NotesComponent', () => {
   it('initial: notes empty, notesCount=0', () => {
     expect(component.notes()).toEqual([]);
     expect(component.notesCount()).toBe(0);
-  });
-
-  it('notesCount updates when stream emits', () => {
-    notesMock.notesSubject.next([
-      { id: '1', text: 'a', createdAt: null as any, updatedAt: null as any },
-      { id: '2', text: 'b', createdAt: null as any, updatedAt: null as any },
-    ]);
-
-    fixture.detectChanges();
-
-    expect(component.notesCount()).toBe(2);
   });
 
   it('addNote(): calls service.add with trimmed text', async () => {

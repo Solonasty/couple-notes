@@ -33,8 +33,8 @@ export class NotesComponent {
   private notesService = inject(NotesService);
   private pairCtx = inject(PairContextService);
 
-readonly activePair = toSignal(this.pairCtx.activePair$, { initialValue: null });
-readonly inPair = computed(() => !!this.activePair());
+  readonly activePair = toSignal(this.pairCtx.activePair$, { initialValue: null });
+  readonly inPair = computed(() => !!this.activePair());
   readonly isAdding = signal(false);
   readonly notes = toSignal(this.notesService.notes$(), { initialValue: [] as Note[] });
   readonly notesCount = computed(() => (this.notes() ?? []).length);

@@ -18,7 +18,6 @@ export class PairContextService {
   private fs = inject(Firestore);
   private auth = inject(AuthService);
 
-  /** Единственный источник правды: активная пара берётся из /pairs */
   readonly activePair$: Observable<ActivePair> = this.auth.user$.pipe(
     switchMap(user => {
       if (!user) return of(null);
