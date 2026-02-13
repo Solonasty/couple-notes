@@ -52,7 +52,7 @@ export class NotesService {
         const q = query(
           this.col(ctx),
           where('ownerUid', '==', ctx.uid),
-          orderBy('updatedAt', 'desc')
+          orderBy('createdAt', 'desc')
         );
 
         return collectionData(q, { idField: 'id' }) as unknown as Observable<Note[]>;

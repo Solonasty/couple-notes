@@ -1,23 +1,84 @@
 <h2>Сводка недели</h2>
 
-<button mat-raised-button color="primary"
-        (click)="generate()"
-        [disabled]="loading()">
-  Получить сводку
-</button>
+<p class="status">{{ statusText() }}</p>
+
+@if (periodText()) {
+  <p class="period">
+    <b>Период отчёта:</b> {{ periodText() }}
+  </p>
+}
+
+<p class="vpn-hint">
+  Важно: для генерации отчёта включите VPN (запрос к LLM работает только через VPN).
+</p>
+
+<div style="display:flex; gap:12px; align-items:center;">
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="generate()"
+    [disabled]="loading() || !canGenerate()"
+  >
+    Сформировать отчёт
+  </button>
+
+  <button
+    mat-stroked-button
+    (click)="getReport()"
+    [disabled]="!canGet()"
+  >
+    Получить отчёт
+  </button>
+</div>
 
 @if (loading()) {
   <p>Генерация...</p>
 }
 
-@if (error()) {
-  <p class="error">{{ error() }}</p>
+@if (uiError()) {
+  <p class="error">{{ uiError() }}</p>
+}
+
+@if (report()?.status === 'error') {
+  <p class="error">{{ report()?.error }}</p>
 }
 
 @if (summary()) {
-  <mat-card>
+  <mat-card style="margin-top:12px;">
     <mat-card-content>
       <pre>{{ summary() }}</pre>
+    </mat-card-content>
+  </mat-card>
+}
+
+@if (report()?.status === 'ready') {
+  <mat-card style="margin-top:12px;">
+    <mat-card-content>
+      <div><b>Сформировал:</b> {{ report()?.createdBy }}</div>
+      <div><b>Заметок в отчёте:</b> {{ report()?.notesCount }}</div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card style="margin-top:12px;">
+    <mat-card-content>
+      <h3 style="margin:0 0 8px 0;">Заметки, использованные для отчёта (debug)</h3>
+
+      @if (!hasSourceNotes()) {
+        <p>Список пуст.</p>
+      } @else {
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          @for (n of sourceNotes(); track n.id) {
+            <div style="border:1px solid #ddd; border-radius:8px; padding:8px;">
+              <div style="font-size:12px; opacity:.8;">
+                <b>ownerUid:</b> {{ n.ownerUid }} · <b>noteId:</b> {{ n.id }}
+              </div>
+              <div style="white-space:pre-wrap; margin-top:6px;">
+                {{ n.text }}
+              </div>
+            </div>
+          }
+        </div>
+      }
     </mat-card-content>
   </mat-card>
 }

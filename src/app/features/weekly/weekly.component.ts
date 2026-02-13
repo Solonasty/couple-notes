@@ -1,13 +1,26 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 
-import { NotesService } from '../../core/services/notes.service';
-import { SummaryService } from '../../core/services/summary.service';
-import { firstValueFrom } from 'rxjs';
-import { Note } from '../../core/services/pair.types';
+import {
+  ReportsService,
+  ReportDoc,
+  Schedule,
+  ReportSourceNote,
+} from '../../core/services/reports.service';
+
+const SCHEDULE_INIT: Schedule = {
+  inPair: false,
+  pairId: null,
+  uid: null,
+  slotEnd: null,
+  slotStart: null,
+  reportId: null,
+  nextAt: null,
+  msToNext: null,
+  due: false,
+};
 
 @Component({
   standalone: true,
@@ -16,27 +29,90 @@ import { Note } from '../../core/services/pair.types';
   templateUrl: './weekly.component.html',
 })
 export class WeeklyComponent {
-  private notesService = inject(NotesService);
-  private summaryService = inject(SummaryService);
+  private reports = inject(ReportsService);
 
-  notes = toSignal(this.notesService.notes$(), { initialValue: [] as Note[] });
+  schedule = toSignal(this.reports.schedule$, { initialValue: SCHEDULE_INIT });
+  report = toSignal(this.reports.report$, { initialValue: null as ReportDoc | null });
 
   summary = signal<string | null>(null);
+  uiError = signal<string | null>(null);
   loading = signal(false);
-  error = signal<string | null>(null);
+
+  private sched = computed<Schedule>(() => this.schedule() ?? SCHEDULE_INIT);
+
+  sourceNotes = computed<ReportSourceNote[]>(() => this.report()?.sourceNotes ?? []);
+  hasSourceNotes = computed(() => this.sourceNotes().length > 0);
+
+
+  periodText = computed(() => {
+    const s = this.sched();
+    if (!s.slotStart || !s.slotEnd) return '';
+    return `${formatDt(s.slotStart)} — ${formatDt(s.slotEnd)}`;
+  });
+
+  canGenerate = computed(() => {
+    const s = this.sched();
+    const r = this.report();
+
+    if (!s.inPair) return false;
+    if (!s.due) return false;
+    if (r?.status === 'ready' || r?.status === 'generating') return false;
+
+    return true;
+  });
+
+  canGet = computed(() => this.report()?.status === 'ready');
+
+  statusText = computed(() => {
+    const s = this.sched();
+    const r = this.report();
+
+    const eta = s.msToNext != null ? formatEta(s.msToNext) : '';
+
+    if (!s.inPair) return 'Вступите в пару, чтобы получать отчёты.';
+    if (!s.due) return `Отчёт можно будет сформировать через ${eta} (в пятницу в 18:00).`;
+
+    if (r?.status === 'generating') return `Генерация отчёта... Следующий срок через ${eta}.`;
+    if (r?.status === 'error') return `Ошибка генерации отчёта. Включите VPN и попробуйте снова. Следующий срок через ${eta}.`;
+    if (r?.status === 'ready') return `Отчёт готов. Следующий срок через ${eta}.`;
+
+    return `Можно сформировать отчёт. Следующий срок через ${eta}.`;
+  });
 
   async generate() {
     this.loading.set(true);
-    this.error.set(null);
+    this.uiError.set(null);
+    this.summary.set(null);
 
     try {
-      const text = await firstValueFrom(this.summaryService.getSummary(this.notes() ?? []));
-this.summary.set(text);
-
+      await this.reports.generateWeekly();
     } catch {
-      this.error.set('Ошибка получения сводки');
+      this.uiError.set('Ошибка получения отчёта. Включите VPN и попробуйте снова.');
     } finally {
       this.loading.set(false);
     }
   }
+
+  getReport() {
+    const r = this.report();
+    if (r?.status === 'ready') this.summary.set(r.summary ?? '');
+  }
+}
+
+function formatEta(ms: number) {
+  const totalMin = Math.max(0, Math.floor(ms / 60000));
+  const d = Math.floor(totalMin / (60 * 24));
+  const h = Math.floor((totalMin % (60 * 24)) / 60);
+  const m = totalMin % 60;
+  if (d > 0) return `${d}д ${h}ч`;
+  if (h > 0) return `${h}ч ${m}м`;
+  return `${m}м`;
+}
+
+function pad2(n: number) {
+  return String(n).padStart(2, '0');
+}
+
+function formatDt(d: Date) {
+  return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
