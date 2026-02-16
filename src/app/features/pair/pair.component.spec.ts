@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PairComponent } from './pair.component';
+import { provideAppTestProviders } from '@/app/core/testing/app-test-providers';
 
 
 
@@ -9,7 +10,8 @@ describe('PairComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [PairComponent]
+      imports: [PairComponent],
+      providers: [...provideAppTestProviders()],
     })
     .compileComponents();
 

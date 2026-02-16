@@ -4,6 +4,7 @@ import { WeeklyComponent } from './weekly.component';
 import { of } from 'rxjs';
 import { NotesService } from '../../core/services/notes.service';
 import { SummaryService } from '../../core/services/summary.service';
+import { provideAppTestProviders } from '@/app/core/testing/app-test-providers';
 
 describe('WeeklyComponent', () => {
   let component: WeeklyComponent;
@@ -22,7 +23,8 @@ describe('WeeklyComponent', () => {
       imports: [WeeklyComponent],
       providers: [
         { provide: NotesService, useValue: notesServiceMock },
-        { provide: SummaryService, useValue: summaryServiceMock }
+        { provide: SummaryService, useValue: summaryServiceMock },
+        ...provideAppTestProviders(),
       ]
     }).compileComponents();
 

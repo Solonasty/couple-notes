@@ -3,6 +3,7 @@ import { NotesComponent } from './notes.component';
 import { BehaviorSubject } from 'rxjs';
 import { NotesService } from '../../core/services/notes.service';
 import { Note } from '../../core/services/pair.types';
+import { provideAppTestProviders } from '@/app/core/testing/app-test-providers';
 
 class NotesServiceMock {
   notesSubject = new BehaviorSubject<Note[]>([]);
@@ -21,7 +22,10 @@ describe('NotesComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [NotesComponent],
-      providers: [{ provide: NotesService, useValue: notesMock }],
+      providers: [
+        { provide: NotesService, useValue: notesMock },
+        ...provideAppTestProviders(),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(NotesComponent);

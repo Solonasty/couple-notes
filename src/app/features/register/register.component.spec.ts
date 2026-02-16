@@ -4,6 +4,7 @@ import { RegisterComponent } from './register.component';
 
 import { signal } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
+import { provideAppTestProviders } from '@/app/core/testing/app-test-providers';
 
 class AuthServiceMock {
   user = signal<any | null>(null);
@@ -22,6 +23,7 @@ describe('RegisterComponent', () => {
       providers: [
         provideRouter([]),
         { provide: AuthService, useClass: AuthServiceMock },
+        ...provideAppTestProviders(),
       ],
     }).compileComponents();
 
