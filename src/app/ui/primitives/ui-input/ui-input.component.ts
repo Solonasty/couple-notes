@@ -2,9 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   Input,
-  Optional,
-  Self,
   ViewEncapsulation,
+  inject,
 } from '@angular/core';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -35,10 +34,12 @@ export class UiInputComponent implements ControlValueAccessor {
   value = '';
   disabled = false;
 
-  private _onChange: (v: string) => void = () => {};
-  private _onTouched: () => void = () => {};
+  private readonly ngControl = inject(NgControl, { self: true, optional: true });
 
-  constructor(@Optional() @Self() public ngControl: NgControl) {
+  private _onChange: (v: string) => void = () => undefined;
+  private _onTouched: () => void = () => undefined;
+
+  constructor() {
     if (this.ngControl) this.ngControl.valueAccessor = this;
   }
 

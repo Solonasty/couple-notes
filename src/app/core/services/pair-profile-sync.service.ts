@@ -1,19 +1,30 @@
 import { Injectable, inject } from '@angular/core';
 import { Firestore, doc, docData } from '@angular/fire/firestore';
-import { updateDoc, serverTimestamp } from 'firebase/firestore';
+import { updateDoc, serverTimestamp, type DocumentReference, type FieldValue } from 'firebase/firestore';
 import {
   EMPTY,
+  Observable,
   combineLatest,
   from,
   switchMap,
   map,
-  filter,
   distinctUntilChanged,
   take,
 } from 'rxjs';
 import { AuthService } from './auth.service';
 import { PairContextService } from './pair-context.service';
 import { UserProfile } from './pair.types';
+
+type PublicUser = {
+  email?: string | null;
+};
+
+type UserDocPatch = {
+  pairId: string | null;
+  partnerUid: string | null;
+  partnerEmail: string | null;
+  updatedAt: FieldValue;
+};
 
 @Injectable({ providedIn: 'root' })
 export class PairProfileSyncService {
@@ -23,11 +34,11 @@ export class PairProfileSyncService {
 
   init() {
     return this.auth.user$.pipe(
-      switchMap(user => {
+      switchMap((user) => {
         if (!user) return EMPTY;
 
-        const myRef = doc(this.fs, `users/${user.uid}`);
-        const myProfile$ = docData(myRef) as unknown as import('rxjs').Observable<UserProfile>;
+        const myRef = doc(this.fs, `users/${user.uid}`) as unknown as DocumentReference<UserProfile>;
+        const myProfile$ = docData(myRef) as unknown as Observable<UserProfile>;
 
         return combineLatest({
           profile: myProfile$,
@@ -51,18 +62,22 @@ export class PairProfileSyncService {
             // нет активной пары
             if (!activePair) {
               if (!currentPairId) return EMPTY;
-              return from(updateDoc(myRef, {
+
+              const patch: UserDocPatch = {
                 pairId: null,
                 partnerUid: null,
                 partnerEmail: null,
                 updatedAt: serverTimestamp(),
-              }));
+              };
+
+              return from(updateDoc(myRef, patch));
             }
 
             // активная пара есть
             const nextPairId = activePair.id;
-            const partnerUid =
-              (activePair.members || []).find((m: string) => m !== user.uid) ?? null;
+
+            const members = Array.isArray(activePair.members) ? activePair.members : [];
+            const partnerUid = members.find((m) => m !== user.uid) ?? null;
 
             const needUpdate =
               currentPairId !== nextPairId ||
@@ -70,26 +85,38 @@ export class PairProfileSyncService {
 
             if (!needUpdate) return EMPTY;
 
+            // если партнёр ещё не определён — просто пишем pairId, а партнёрские поля очищаем
             if (!partnerUid) {
-              return from(updateDoc(myRef, {
+              const patch: UserDocPatch = {
                 pairId: nextPairId,
                 partnerUid: null,
                 partnerEmail: null,
                 updatedAt: serverTimestamp(),
-              }));
+              };
+
+              return from(updateDoc(myRef, patch));
             }
 
-            const partnerPublicRef = doc(this.fs, `publicUsers/${partnerUid}`);
-            return (docData(partnerPublicRef) as any).pipe(
+            // берём email партнёра из publicUsers/{uid}
+            const partnerPublicRef = doc(
+              this.fs,
+              `publicUsers/${partnerUid}`
+            ) as unknown as DocumentReference<PublicUser>;
+
+            const partnerPublic$ = docData(partnerPublicRef) as unknown as Observable<PublicUser>;
+
+            return partnerPublic$.pipe(
               take(1),
-              switchMap((partnerPublic: any) =>
-                from(updateDoc(myRef, {
+              switchMap((partnerPublic) => {
+                const patch: UserDocPatch = {
                   pairId: nextPairId,
                   partnerUid,
-                  partnerEmail: partnerPublic?.email ?? null,
+                  partnerEmail: partnerPublic.email ?? null,
                   updatedAt: serverTimestamp(),
-                }))
-              )
+                };
+
+                return from(updateDoc(myRef, patch));
+              })
             );
           })
         );

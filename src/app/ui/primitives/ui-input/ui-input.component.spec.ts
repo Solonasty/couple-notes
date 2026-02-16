@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { UiSectionHeaderComponent } from './section-header.component';
+import { UiInputComponent } from './ui-input.component';
 
 describe('DashboardComponent', () => {
-  let component: UiSectionHeaderComponent;
-  let fixture: ComponentFixture<UiSectionHeaderComponent>;
+  let component: UiInputComponent;
+  let fixture: ComponentFixture<UiInputComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [UiSectionHeaderComponent]
+      imports: [UiInputComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(UiSectionHeaderComponent);
+    fixture = TestBed.createComponent(UiInputComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

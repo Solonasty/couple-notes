@@ -45,8 +45,26 @@ export class AuthService {
 
 type AuthAction = 'signin' | 'signup';
 
+type FirebaseAuthErrorLike = {
+  code: string;
+  message?: string;
+};
+
+function isFirebaseAuthErrorLike(e: unknown): e is FirebaseAuthErrorLike {
+  return (
+    typeof e === 'object' &&
+    e !== null &&
+    'code' in e &&
+    typeof (e as Record<string, unknown>)['code'] === 'string'
+  );
+}
+
+function getAuthErrorCode(e: unknown): string | undefined {
+  return isFirebaseAuthErrorLike(e) ? e.code : undefined;
+}
+
 function mapFirebaseAuthError(e: unknown, action: AuthAction): string {
-  const code = (e as any)?.code as string | undefined;
+  const code = getAuthErrorCode(e);
 
   switch (code) {
     // sign in
@@ -77,7 +95,6 @@ function mapFirebaseAuthError(e: unknown, action: AuthAction): string {
     case 'auth/weak-password':
       return 'Пароль слишком простой. Используйте минимум 6 символов';
 
-    // fallback
     default:
       return action === 'signup'
         ? 'Не удалось зарегистрироваться. Попробуйте ещё раз'

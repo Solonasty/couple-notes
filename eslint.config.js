@@ -5,6 +5,7 @@ const tseslint = require("typescript-eslint");
 const angular = require("angular-eslint");
 
 module.exports = defineConfig([
+  // Общие правила для всего приложения (app-)
   {
     files: ["**/*.ts"],
     extends: [
@@ -34,6 +35,31 @@ module.exports = defineConfig([
       ],
     },
   },
+
+  // ✅ Override: дизайн-система (ui-)
+  {
+    files: ["src/app/ui/**/*.ts"],
+    rules: {
+      "@angular-eslint/directive-selector": [
+        "error",
+        {
+          type: "attribute",
+          prefix: "ui",
+          style: "camelCase",
+        },
+      ],
+      "@angular-eslint/component-selector": [
+        "error",
+        {
+          type: "element",
+          prefix: "ui",
+          style: "kebab-case",
+        },
+      ],
+    },
+  },
+
+  // HTML
   {
     files: ["**/*.html"],
     extends: [
@@ -42,6 +68,8 @@ module.exports = defineConfig([
     ],
     rules: {},
   },
+
+  // тесты
   {
     files: ["**/*.spec.ts", "**/*.test.ts"],
     rules: {

@@ -7,10 +7,12 @@ import {
   doc,
   docData,
   setDoc,
-  serverTimestamp
+  serverTimestamp,
 } from '@angular/fire/firestore';
 
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { of, switchMap, type Observable } from 'rxjs';
+import type { DocumentReference } from 'firebase/firestore';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -28,6 +30,8 @@ type UserProfile = {
   email?: string;
   name?: string;
   pairId?: string | null;
+  partnerUid?: string | null;
+  partnerEmail?: string | null;
 };
 
 @Component({
@@ -38,7 +42,7 @@ type UserProfile = {
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule
+    MatButtonModule,
   ],
   templateUrl: './dashboard.component.html',
 })
@@ -50,12 +54,16 @@ export class DashboardComponent {
   readonly user = this.auth.user;
   readonly uid = computed(() => this.user()?.uid ?? null);
 
+  // корректная реактивность: uid (signal) -> observable -> docData -> signal
   readonly profile = toSignal<UserProfile | null>(
-    computed(() => {
-      const uid = this.uid();
-      if (!uid) return null;
-      return docData(doc(this.fs, `users/${uid}`)) as any;
-    })() as any,
+    toObservable(this.uid).pipe(
+      switchMap((uid) => {
+        if (!uid) return of(null);
+
+        const ref = doc(this.fs, `users/${uid}`) as unknown as DocumentReference<UserProfile>;
+        return docData(ref) as unknown as Observable<UserProfile>;
+      })
+    ),
     { initialValue: null }
   );
 
@@ -104,12 +112,13 @@ export class DashboardComponent {
     this.saving.set(true);
     try {
       const name = this.profileForm.getRawValue().name.trim();
+      const email = (this.user()?.email ?? '').toLowerCase();
 
       await setDoc(
         doc(this.fs, `users/${uid}`),
         {
           name,
-          email: (this.user()?.email ?? '').toLowerCase(),
+          email,
           updatedAt: serverTimestamp(),
         },
         { merge: true }
@@ -119,7 +128,7 @@ export class DashboardComponent {
         doc(this.fs, `publicUsers/${uid}`),
         {
           name,
-          email: (this.user()?.email ?? '').toLowerCase(),
+          email,
           updatedAt: serverTimestamp(),
         },
         { merge: true }
@@ -144,15 +153,17 @@ export class DashboardComponent {
     this.saving.set(true);
     try {
       const { newEmail, currentPassword } = this.emailForm.getRawValue();
+      const cleanEmail = newEmail.trim().toLowerCase();
+
       await this.reauth(currentPassword);
-      await updateEmail(u, newEmail.trim().toLowerCase());
+      await updateEmail(u, cleanEmail);
 
       const uid = u.uid;
 
       await setDoc(
         doc(this.fs, `users/${uid}`),
         {
-          email: newEmail.trim().toLowerCase(),
+          email: cleanEmail,
           updatedAt: serverTimestamp(),
         },
         { merge: true }
@@ -161,7 +172,7 @@ export class DashboardComponent {
       await setDoc(
         doc(this.fs, `publicUsers/${uid}`),
         {
-          email: newEmail.trim().toLowerCase(),
+          email: cleanEmail,
           updatedAt: serverTimestamp(),
         },
         { merge: true }

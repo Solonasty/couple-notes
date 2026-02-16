@@ -7,7 +7,7 @@ import {
   where,
   limit,
 } from '@angular/fire/firestore';
-import { Observable, of, switchMap, map, shareReplay, catchError } from 'rxjs';
+import { Observable, of, switchMap, map, shareReplay } from 'rxjs';
 import { AuthService } from './auth.service';
 import { PairDoc } from './pair.types';
 

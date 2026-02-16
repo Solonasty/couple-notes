@@ -1,19 +1,59 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, doc, getDocs, query, runTransaction, serverTimestamp, setDoc, where } from '@angular/fire/firestore';
-import { AuthService } from './auth.service';
-import { PairInvite } from './pair.types';
-import { getDoc } from '@angular/fire/firestore';
+import {
+  Firestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  runTransaction,
+  serverTimestamp,
+  setDoc,
+  where,
+} from '@angular/fire/firestore';
 import { combineLatest, map, shareReplay } from 'rxjs';
-import { PairContextService } from './pair-context.service';
+import type {
+  DocumentReference,
+  FieldValue,
+  WithFieldValue,
+} from 'firebase/firestore';
 
+import { AuthService } from './auth.service';
+import { PairContextService } from './pair-context.service';
+import { PairInvite } from './pair.types';
+
+type UserDoc = {
+  email?: string | null;
+
+  pairId?: string | null;
+  partnerUid?: string | null;
+  partnerEmail?: string | null;
+
+  updatedAt?: FieldValue;
+};
+
+type PairDoc = {
+  members?: string[];
+  status?: 'active' | 'ended';
+
+  endedAt?: FieldValue | null;
+  endedBy?: string | null;
+
+  createdAt?: FieldValue;
+  reactivatedAt?: FieldValue;
+};
+
+type PairInviteDoc = PairInvite & {
+  acceptedAt?: FieldValue;
+};
 
 @Injectable({ providedIn: 'root' })
 export class PairService {
   private fs = inject(Firestore);
   private auth = inject(AuthService);
-
   private pairCtx = inject(PairContextService);
 
+  // (оставил как у тебя; если не используешь — можно удалить)
   private ctx$ = combineLatest([this.auth.user$, this.pairCtx.activePair$]).pipe(
     map(([user, activePair]) => {
       if (!user) return { mode: 'none' as const };
@@ -48,19 +88,29 @@ export class PairService {
 
     const invitesCol = collection(this.fs, 'pairInvites');
 
-    //  Проверки дублей (rules это разрешат, потому что фильтруем by fromUid/toUid)
-    const qOut = query(invitesCol, where('fromUid', '==', a), where('toUid', '==', b), where('status', '==', 'pending'));
+    // проверки дублей
+    const qOut = query(
+      invitesCol,
+      where('fromUid', '==', a),
+      where('toUid', '==', b),
+      where('status', '==', 'pending')
+    );
     const outSnap = await getDocs(qOut);
     if (!outSnap.empty) throw new Error('Вы уже отправили приглашение этому пользователю');
 
-    const qIn = query(invitesCol, where('fromUid', '==', b), where('toUid', '==', a), where('status', '==', 'pending'));
+    const qIn = query(
+      invitesCol,
+      where('fromUid', '==', b),
+      where('toUid', '==', a),
+      where('status', '==', 'pending')
+    );
     const inSnap = await getDocs(qIn);
     if (!inSnap.empty) throw new Error('У вас уже есть входящее приглашение от этого пользователя');
 
-    //  ВАЖНО: inviteId теперь НЕ pairId. Это новый документ каждый раз.
-    const inviteRef = doc(invitesCol);
+    // inviteId теперь НЕ pairId. Это новый документ каждый раз.
+    const inviteRef = doc(invitesCol) as unknown as DocumentReference<PairInviteDoc>;
 
-    const invite: PairInvite = {
+    const invite: PairInviteDoc = {
       pairId,
       fromUid: a,
       toUid: b,
@@ -77,14 +127,15 @@ export class PairService {
     const me = this.auth.user();
     if (!me) throw new Error('Вы не авторизованы');
 
-    const inviteRef = doc(this.fs, `pairInvites/${inviteId}`);
-    const myRef = doc(this.fs, `users/${me.uid}`);
+    const inviteRef = doc(this.fs, `pairInvites/${inviteId}`) as unknown as DocumentReference<PairInviteDoc>;
+    const myRef = doc(this.fs, `users/${me.uid}`) as unknown as DocumentReference<UserDoc>;
 
     await runTransaction(this.fs, async (tx) => {
       const invSnap = await tx.get(inviteRef);
       if (!invSnap.exists()) throw new Error('Приглашение не найдено');
 
-      const inv = invSnap.data() as PairInvite;
+      const inv = invSnap.data();
+      if (!inv) throw new Error('Приглашение не найдено');
 
       if (inv.toUid !== me.uid) throw new Error('Это приглашение не для вас');
       if (inv.status !== 'pending') throw new Error('Приглашение уже обработано');
@@ -92,24 +143,26 @@ export class PairService {
       const mySnap = await tx.get(myRef);
       if (!mySnap.exists()) throw new Error('Ваш профиль users/{uid} не найден');
 
-      const myPairId = (mySnap.data() as any)?.pairId ?? null;
+      const myPairId = mySnap.data()?.pairId ?? null;
       if (myPairId) throw new Error('Вы уже состоите в паре');
 
-      //  пары всегда по pairId
-      const pairRef = doc(this.fs, `pairs/${inv.pairId}`);
+      // пары всегда по pairId
+      const pairRef = doc(this.fs, `pairs/${inv.pairId}`) as unknown as DocumentReference<PairDoc>;
 
       // всегда сортируем members, чтобы никогда не ломать rules по сравнению массивов
       const members = [inv.fromUid, inv.toUid].sort();
 
-      // если пара была ended — реактивируем (endedAt/endedBy в null, не deleteField)
-      tx.set(pairRef, {
+      // если пара была ended — реактивируем
+      const pairUpsert: WithFieldValue<PairDoc> = {
         members,
         status: 'active',
         endedAt: null,
         endedBy: null,
         createdAt: serverTimestamp(),
         reactivatedAt: serverTimestamp(),
-      }, { merge: true });
+      };
+
+      tx.set(pairRef, pairUpsert, { merge: true });
 
       // пишем себе пару
       tx.update(myRef, {
@@ -131,13 +184,15 @@ export class PairService {
     const me = this.auth.user();
     if (!me) throw new Error('Вы не авторизованы');
 
-    const inviteRef = doc(this.fs, `pairInvites/${inviteId}`);
+    const inviteRef = doc(this.fs, `pairInvites/${inviteId}`) as unknown as DocumentReference<PairInviteDoc>;
 
     await runTransaction(this.fs, async (tx) => {
       const invSnap = await tx.get(inviteRef);
       if (!invSnap.exists()) throw new Error('Приглашение не найдено');
 
-      const inv = invSnap.data() as any;
+      const inv = invSnap.data();
+      if (!inv) throw new Error('Приглашение не найдено');
+
       if (inv.toUid !== me.uid) throw new Error('Это приглашение не для вас');
       if (inv.status !== 'pending') throw new Error('Приглашение уже обработано');
 
@@ -149,14 +204,15 @@ export class PairService {
     const me = this.auth.user();
     if (!me) throw new Error('Вы не авторизованы');
 
-    const inviteRef = doc(this.fs, `pairInvites/${inviteId}`);
-    const myRef = doc(this.fs, `users/${me.uid}`);
+    const inviteRef = doc(this.fs, `pairInvites/${inviteId}`) as unknown as DocumentReference<PairInviteDoc>;
+    const myRef = doc(this.fs, `users/${me.uid}`) as unknown as DocumentReference<UserDoc>;
 
     await runTransaction(this.fs, async (tx) => {
       const invSnap = await tx.get(inviteRef);
       if (!invSnap.exists()) return;
 
-      const inv = invSnap.data() as PairInvite;
+      const inv = invSnap.data();
+      if (!inv) return;
 
       if (inv.fromUid !== me.uid) return;
       if (inv.status !== 'accepted') return;
@@ -164,25 +220,29 @@ export class PairService {
       const mySnap = await tx.get(myRef);
       if (!mySnap.exists()) return;
 
-      const myPairId = (mySnap.data() as any)?.pairId ?? null;
+      const myPairId = mySnap.data()?.pairId ?? null;
       if (myPairId) return; // уже в паре
 
-      //  проверяем, что пара активна (иначе НЕ прикрепляем старую ended пару)
-      const pairRef = doc(this.fs, `pairs/${inv.pairId}`);
+      // проверяем, что пара активна (иначе НЕ прикрепляем старую ended пару)
+      const pairRef = doc(this.fs, `pairs/${inv.pairId}`) as unknown as DocumentReference<PairDoc>;
       const pairSnap = await tx.get(pairRef);
       if (!pairSnap.exists()) return;
 
-      const pair = pairSnap.data() as any;
-      const ended = pair?.status === 'ended' || !!pair?.endedAt;
+      const pair = pairSnap.data();
+      const ended = pair?.status === 'ended' || pair?.endedAt != null;
       if (ended) return;
 
-      //  set merge вместо update — надёжнее
-      tx.set(myRef, {
-        pairId: inv.pairId,
-        partnerUid: inv.toUid,
-        partnerEmail: inv.toEmail,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
+      // set merge вместо update — надёжнее
+      tx.set(
+        myRef,
+        {
+          pairId: inv.pairId,
+          partnerUid: inv.toUid,
+          partnerEmail: inv.toEmail,
+          updatedAt: serverTimestamp(),
+        } satisfies WithFieldValue<UserDoc>,
+        { merge: true }
+      );
     });
   }
 
@@ -190,29 +250,34 @@ export class PairService {
     const me = this.auth.user();
     if (!me) throw new Error('Вы не авторизованы');
 
-    const myRef = doc(this.fs, `users/${me.uid}`);
+    const myRef = doc(this.fs, `users/${me.uid}`) as unknown as DocumentReference<UserDoc>;
     const mySnap = await getDoc(myRef);
-    const pairId = (mySnap.data() as any)?.pairId ?? null;
 
+    const pairId = mySnap.data()?.pairId ?? null;
     if (!pairId) throw new Error('Вы не состоите в паре');
 
-    const pairRef = doc(this.fs, `pairs/${pairId}`);
+    const pairRef = doc(this.fs, `pairs/${pairId}`) as unknown as DocumentReference<PairDoc>;
 
     await runTransaction(this.fs, async (tx) => {
       const pairSnap = await tx.get(pairRef);
+
       if (!pairSnap.exists()) {
         // если пары нет — просто чистим профиль
-        tx.set(myRef, {
-          pairId: null,
-          partnerUid: null,
-          partnerEmail: null,
-          updatedAt: serverTimestamp(),
-        }, { merge: true });
+        tx.set(
+          myRef,
+          {
+            pairId: null,
+            partnerUid: null,
+            partnerEmail: null,
+            updatedAt: serverTimestamp(),
+          } satisfies WithFieldValue<UserDoc>,
+          { merge: true }
+        );
         return;
       }
 
-      const pair = pairSnap.data() as any;
-      const members: string[] = pair?.members ?? [];
+      const pair = pairSnap.data();
+      const members = Array.isArray(pair?.members) ? pair.members : [];
       if (!members.includes(me.uid)) throw new Error('Нет доступа к этой паре');
 
       // помечаем пару завершённой (members не трогаем)
@@ -223,12 +288,16 @@ export class PairService {
       });
 
       // чистим ТОЛЬКО свой профиль
-      tx.set(myRef, {
-        pairId: null,
-        partnerUid: null,
-        partnerEmail: null,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
+      tx.set(
+        myRef,
+        {
+          pairId: null,
+          partnerUid: null,
+          partnerEmail: null,
+          updatedAt: serverTimestamp(),
+        } satisfies WithFieldValue<UserDoc>,
+        { merge: true }
+      );
     });
   }
 
@@ -236,34 +305,41 @@ export class PairService {
     const me = this.auth.user();
     if (!me) return;
 
-    const myRef = doc(this.fs, `users/${me.uid}`);
-    const pairRef = doc(this.fs, `pairs/${pairId}`);
+    const myRef = doc(this.fs, `users/${me.uid}`) as unknown as DocumentReference<UserDoc>;
+    const pairRef = doc(this.fs, `pairs/${pairId}`) as unknown as DocumentReference<PairDoc>;
 
     const pairSnap = await getDoc(pairRef);
 
     // если пары нет — считаем что она неактуальна и чистим профиль
     if (!pairSnap.exists()) {
-      await setDoc(myRef, {
-        pairId: null,
-        partnerUid: null,
-        partnerEmail: null,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
+      await setDoc(
+        myRef,
+        {
+          pairId: null,
+          partnerUid: null,
+          partnerEmail: null,
+          updatedAt: serverTimestamp(),
+        } satisfies WithFieldValue<UserDoc>,
+        { merge: true }
+      );
       return;
     }
 
-    const pair = pairSnap.data() as any;
-
-    const ended = pair?.status === 'ended' || (pair?.endedAt != null);
+    const pair = pairSnap.data();
+    const ended = pair?.status === 'ended' || pair?.endedAt != null;
 
     if (!ended) return;
 
     // чистим только свой профиль
-    await setDoc(myRef, {
-      pairId: null,
-      partnerUid: null,
-      partnerEmail: null,
-      updatedAt: serverTimestamp(),
-    }, { merge: true });
+    await setDoc(
+      myRef,
+      {
+        pairId: null,
+        partnerUid: null,
+        partnerEmail: null,
+        updatedAt: serverTimestamp(),
+      } satisfies WithFieldValue<UserDoc>,
+      { merge: true }
+    );
   }
 }

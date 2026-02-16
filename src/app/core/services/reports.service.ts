@@ -5,25 +5,33 @@ import {
   doc,
   docData,
   getDocs,
-  query,
-  where,
   orderBy,
+  query,
   runTransaction,
+  where,
 } from '@angular/fire/firestore';
-import { Timestamp } from '@angular/fire/firestore';
-import { updateDoc, serverTimestamp } from 'firebase/firestore';
 import {
   Observable,
-  of,
-  switchMap,
-  map,
-  shareReplay,
   combineLatest,
-  timer,
   firstValueFrom,
-  catchError,
+  map,
+  of,
+  shareReplay,
+  switchMap,
   take,
+  timer,
+  catchError,
 } from 'rxjs';
+
+import {
+  Timestamp,
+  updateDoc,
+  serverTimestamp,
+  type DocumentReference,
+  type FieldValue,
+  type WithFieldValue,
+  type UpdateData,
+} from 'firebase/firestore';
 
 import { AuthService } from './auth.service';
 import { PairContextService } from './pair-context.service';
@@ -31,9 +39,9 @@ import { SummaryService } from './summary.service';
 import { Note } from './pair.types';
 
 // const REPORT_PERIOD_OVERRIDE: { startISO: string; endISO: string } | null = {
-//     startISO: '2026-02-06T18:00:00+03:00',
-//     endISO: '2026-02-13T18:00:00+03:00',
-//   };
+//   startISO: '2026-02-06T18:00:00+03:00',
+//   endISO: '2026-02-13T18:00:00+03:00',
+// };
 
 const REPORT_PERIOD_OVERRIDE: { startISO: string; endISO: string } | null = {
   startISO: '2026-02-11T18:00:00+03:00',
@@ -43,25 +51,32 @@ const REPORT_PERIOD_OVERRIDE: { startISO: string; endISO: string } | null = {
 
 const REPORT_SHIFT_WEEKS = 0;
 
+type FsTime = Timestamp | FieldValue | null | undefined;
+
 export type ReportSourceNote = {
   id: string;
   text: string;
   ownerUid: string;
-  updatedAt?: any;
+  updatedAt?: FsTime;
 };
 
 export type ReportDoc = {
   id: string;
   status: 'generating' | 'ready' | 'error';
-  createdAt?: any;
+  createdAt?: FsTime;
   createdBy?: string;
-  periodStart?: any;
-  periodEnd?: any;
+  periodStart?: FsTime;
+  periodEnd?: FsTime;
   notesCount?: number;
   summary?: string | null;
   error?: string | null;
   sourceNotes?: ReportSourceNote[];
+  updatedAt?: FsTime;
 };
+
+type FirestoreReportDoc = Omit<ReportDoc, 'id'>;
+// для docData(idField:'id') нужно, чтобы тип содержал ключ 'id'
+type FirestoreReportDocWithId = FirestoreReportDoc & { id: string };
 
 export type Schedule = {
   inPair: boolean;
@@ -95,7 +110,8 @@ export class ReportsService {
       const now = new Date();
 
       const { slotStart, slotEnd, nextAt, msToNext, due } = computePeriod(now);
-      const reportId = slotStart && slotEnd ? reportIdFromPeriod(slotStart, slotEnd) : null;
+      const reportId =
+        slotStart && slotEnd ? reportIdFromPeriod(slotStart, slotEnd) : null;
 
       if (!user || !pair) {
         return {
@@ -127,11 +143,20 @@ export class ReportsService {
   );
 
   readonly report$: Observable<ReportDoc | null> = this.schedule$.pipe(
-    switchMap(s => {
+    switchMap((s) => {
       if (!s.inPair || !s.pairId || !s.reportId) return of(null);
-      const ref = doc(this.fs, `pairs/${s.pairId}/reports/${s.reportId}`);
-      return (docData(ref, { idField: 'id' }) as unknown as Observable<ReportDoc | undefined>).pipe(
-        map(d => (d ? d : null)),
+
+      const ref = doc(
+        this.fs,
+        `pairs/${s.pairId}/reports/${s.reportId}`
+      ) as unknown as DocumentReference<FirestoreReportDoc>;
+
+      // docData(idField:'id') требует, чтобы key существовал в типе
+      const refWithId =
+        ref as unknown as DocumentReference<FirestoreReportDocWithId>;
+
+      return docData(refWithId, { idField: 'id' }).pipe(
+        map((d) => (d ? (d as unknown as ReportDoc) : null)),
         catchError(() => of(null))
       );
     }),
@@ -148,18 +173,23 @@ export class ReportsService {
       throw new Error('NOT_DUE_YET');
     }
 
-    // сузили типы: дальше точно Date
+    // теперь типы точно string/Date
+    const uid = s.uid;
     const slotStart = s.slotStart;
     const slotEnd = s.slotEnd;
 
-    const reportRef = doc(this.fs, `pairs/${s.pairId}/reports/${s.reportId}`);
+    const reportRef = doc(
+      this.fs,
+      `pairs/${s.pairId}/reports/${s.reportId}`
+    ) as unknown as DocumentReference<FirestoreReportDoc>;
+
     let shouldGenerate = false;
 
     await runTransaction(this.fs, async (tx) => {
       const snap = await tx.get(reportRef);
 
       if (snap.exists()) {
-        const status = (snap.data() as any)?.status;
+        const status = snap.data()?.status;
         if (status === 'ready' || status === 'generating') {
           shouldGenerate = false;
           return;
@@ -168,20 +198,18 @@ export class ReportsService {
 
       shouldGenerate = true;
 
-      tx.set(
-        reportRef as any,
-        {
-          status: 'generating',
-          createdAt: serverTimestamp(),
-          createdBy: s.uid,
-          periodStart: Timestamp.fromDate(slotStart),
-          periodEnd: Timestamp.fromDate(slotEnd),
-          summary: null,
-          error: null,
-          sourceNotes: [],
-        },
-        { merge: true }
-      );
+      const init: WithFieldValue<FirestoreReportDoc> = {
+        status: 'generating',
+        createdAt: serverTimestamp(),
+        createdBy: uid,
+        periodStart: Timestamp.fromDate(slotStart),
+        periodEnd: Timestamp.fromDate(slotEnd),
+        summary: null,
+        error: null,
+        sourceNotes: [],
+      };
+
+      tx.set(reportRef, init, { merge: true });
     });
 
     if (!shouldGenerate) return;
@@ -196,31 +224,49 @@ export class ReportsService {
       );
 
       const snap = await getDocs(q);
-      const notes = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as Note[];
 
-      const sourceNotes: ReportSourceNote[] = notes.slice(0, 200).map(n => ({
-        id: n.id,
-        text: String((n as any).text ?? '').slice(0, 2000),
-        ownerUid: String((n as any).ownerUid ?? ''),
-        updatedAt: (n as any).updatedAt ?? null,
-      }));
+      const notes = snap.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Omit<Note, 'id'>),
+      })) as Note[];
+
+      const sourceNotes: ReportSourceNote[] = notes.slice(0, 200).map((n) => {
+        const r = n as unknown as Record<string, unknown>;
+
+        const text = typeof r['text'] === 'string' ? r['text'] : '';
+        const ownerUid = typeof r['ownerUid'] === 'string' ? r['ownerUid'] : '';
+        const updatedAt = (r['updatedAt'] ?? null) as FsTime;
+
+        return {
+          id: n.id,
+          text: text.slice(0, 2000),
+          ownerUid,
+          updatedAt,
+        };
+      });
 
       const summaryText = await firstValueFrom(this.summary.getSummary(notes));
 
-      await updateDoc(reportRef as any, {
+      const readyPatch: UpdateData<FirestoreReportDoc> = {
         status: 'ready',
         summary: summaryText,
         error: null,
         notesCount: notes.length,
         sourceNotes,
         updatedAt: serverTimestamp(),
-      });
-    } catch (e: any) {
-      await updateDoc(reportRef as any, {
+      };
+
+      await updateDoc(reportRef, readyPatch);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'LLM_ERROR';
+
+      const errorPatch: UpdateData<FirestoreReportDoc> = {
         status: 'error',
-        error: String(e?.message || 'LLM_ERROR').slice(0, 500),
+        error: String(msg).slice(0, 500),
         updatedAt: serverTimestamp(),
-      });
+      };
+
+      await updateDoc(reportRef, errorPatch);
       throw e;
     }
   }
@@ -235,7 +281,7 @@ function computePeriod(now: Date): {
   msToNext: number | null;
   due: boolean;
 } {
-  //  ручной период
+  // ручной период
   if (REPORT_PERIOD_OVERRIDE) {
     const slotStart = new Date(REPORT_PERIOD_OVERRIDE.startISO);
     const slotEnd = new Date(REPORT_PERIOD_OVERRIDE.endISO);
@@ -247,7 +293,7 @@ function computePeriod(now: Date): {
       throw new Error('REPORT_PERIOD_OVERRIDE: start must be < end');
     }
 
-    const nextAt = slotEnd; // для таймера показываем до конца этого окна
+    const nextAt = slotEnd;
     const msToNext = nextAt.getTime() - now.getTime();
     const due = now.getTime() >= slotEnd.getTime();
 
@@ -259,7 +305,7 @@ function computePeriod(now: Date): {
   const slotEnd = addDays(baseEnd, REPORT_SHIFT_WEEKS * 7);
   const slotStart = addDays(slotEnd, -7);
 
-  // следующий срок (будущая пятница 18:00 относительно slotEnd)
+  // следующий срок
   const nextAt = now.getTime() < slotEnd.getTime() ? slotEnd : addDays(slotEnd, 7);
   const msToNext = nextAt.getTime() - now.getTime();
   const due = now.getTime() >= slotEnd.getTime();
@@ -278,7 +324,9 @@ function pad2(n: number) {
 }
 
 function fmtId(d: Date) {
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}_${pad2(d.getHours())}-${pad2(d.getMinutes())}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}_${pad2(
+    d.getHours()
+  )}-${pad2(d.getMinutes())}`;
 }
 
 /** reportId зависит от start+end, чтобы при ручных периодах не было коллизий */
