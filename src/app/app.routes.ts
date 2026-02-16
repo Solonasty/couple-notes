@@ -27,6 +27,7 @@ export const routes: Routes = [
       { path: 'weekly', loadComponent: () => import('./features/weekly/weekly.component').then(m => m.WeeklyComponent) },
       { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
       { path: 'pair', loadComponent: () => import('./features/pair/pair.component').then(m => m.PairComponent) },
+      { path: 'ui-kit', loadComponent: () => import('./features/ui-kit/ui-kit.component').then(m => m.UIKitComponent) },
 
     ],
   },

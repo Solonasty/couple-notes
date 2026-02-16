@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../../core/services/auth.service';
+import { UiButtonComponent } from '../../ui/primitives/ui-button/ui-button.component';
 
 @Component({
   standalone: true,
@@ -14,7 +15,7 @@ import { AuthService } from '../../core/services/auth.service';
   imports: [
     RouterLink,
     ReactiveFormsModule,
-    MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule
+    MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, UiButtonComponent
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'

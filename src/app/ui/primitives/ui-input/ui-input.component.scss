@@ -1,0 +1,38 @@
+:host { display: block; }
+
+.field {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 14px;
+
+  background: var(--ui-input-bg, transparent);
+  border: 1px solid var(--ui-input-border, rgba(0,0,0,.14));
+}
+
+.label {
+  font-size: 14px;
+  line-height: 1.1;
+  color: var(--ui-input-label, rgba(0,0,0,.65));
+}
+
+.input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  padding: 0;
+  font: var(--mat-sys-body-large);
+  color: var(--ui-input-text, var(--app-text));
+}
+
+.error {
+  font-size: 12px;
+  opacity: .9;
+  color: #ff6b6b;
+}
+
+.invalid {
+  border-color: rgba(255, 107, 107, .75);
+}
+
+.full { width: 100%; }

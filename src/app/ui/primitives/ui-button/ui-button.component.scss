@@ -1,0 +1,120 @@
+.ui-btn {
+  /* базовые значения (fallback) */
+  --ui-btn-bg: var(--mat-sys-primary);
+  --ui-btn-fg: var(--mat-sys-on-primary);
+  --ui-btn-border: transparent;
+
+  --ui-btn-hover-bg: color-mix(in oklab, var(--ui-btn-bg) 92%, black);
+  --ui-btn-active-bg: color-mix(in oklab, var(--ui-btn-bg) 88%, black);
+  --ui-btn-focus-ring: color-mix(in oklab, var(--mat-sys-primary) 30%, transparent);
+
+  --ui-btn-h: 56px;
+  --ui-btn-px: 18px;
+  --ui-btn-radius: 999px;
+  --ui-btn-gap: 10px;
+
+  height: var(--ui-btn-h);
+  padding: 0 var(--ui-btn-px);
+
+  border: 1px solid var(--ui-btn-border);
+  border-radius: var(--ui-btn-radius);
+
+  background: var(--ui-btn-bg);
+  color: var(--ui-btn-fg);
+
+  cursor: pointer;
+  user-select: none;
+
+  font: var(--mat-sys-label-large);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-btn-gap);
+
+  transition:
+    transform .08s ease,
+    opacity .2s ease,
+    background-color .2s ease,
+    border-color .2s ease;
+
+  &:hover:not(:disabled) { background: var(--ui-btn-hover-bg); }
+  &:active:not(:disabled) { transform: scale(.99); background: var(--ui-btn-active-bg); }
+
+  &:disabled { opacity: .55; cursor: default; }
+
+  &:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--ui-btn-focus-ring);
+  }
+}
+
+.ui-btn--full { width: 100%; }
+
+/* sizes */
+.ui-btn--sm { --ui-btn-h: 40px; --ui-btn-px: 14px; --ui-btn-gap: 8px; }
+.ui-btn--md { --ui-btn-h: 56px; --ui-btn-px: 18px; --ui-btn-gap: 10px; }
+.ui-btn--lg { --ui-btn-h: 64px; --ui-btn-px: 20px; --ui-btn-gap: 12px; }
+
+/* variants (только переменные!) */
+.ui-btn--primary {
+  --ui-btn-bg: var(--mat-sys-primary);
+  --ui-btn-fg: var(--mat-sys-on-primary);
+  --ui-btn-border: transparent;
+}
+
+.ui-btn--accent {
+  --ui-btn-bg: var(--mat-sys-tertiary);
+  --ui-btn-fg: var(--mat-sys-on-tertiary);
+  --ui-btn-border: transparent;
+}
+
+.ui-btn--black {
+  --ui-btn-bg: var(--app-color-black);
+  --ui-btn-fg: var(--app-color-white);
+  --ui-btn-border: transparent;
+}
+
+.ui-btn--outline {
+  --ui-btn-bg: transparent;
+  --ui-btn-fg: var(--mat-sys-on-surface);
+  --ui-btn-border: color-mix(in oklab, var(--mat-sys-on-surface) 30%, transparent);
+
+  --ui-btn-hover-bg: color-mix(in oklab, var(--mat-sys-on-surface) 6%, transparent);
+  --ui-btn-active-bg: color-mix(in oklab, var(--mat-sys-on-surface) 10%, transparent);
+}
+
+.ui-btn--ghost {
+  --ui-btn-bg: transparent;
+  --ui-btn-fg: var(--mat-sys-primary);
+  --ui-btn-border: transparent;
+
+  --ui-btn-hover-bg: color-mix(in oklab, var(--mat-sys-primary) 10%, transparent);
+  --ui-btn-active-bg: color-mix(in oklab, var(--mat-sys-primary) 14%, transparent);
+}
+
+.ui-btn--danger {
+  --ui-btn-bg: var(--mat-sys-error);
+  --ui-btn-fg: var(--mat-sys-on-error);
+  --ui-btn-border: transparent;
+}
+
+/* loading */
+.ui-btn__spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: uiBtnSpin .7s linear infinite;
+}
+
+.ui-btn__content--hidden {
+  opacity: 0;
+}
+
+@keyframes uiBtnSpin {
+  to { transform: rotate(360deg); }
+}

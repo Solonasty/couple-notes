@@ -1,0 +1,18 @@
+<div class="field" [class.full]="full" [class.invalid]="showError">
+    <label class="label">{{ label }}</label>
+
+    <input
+      class="input"
+      [type]="type"
+      [autocomplete]="autocomplete"
+      [placeholder]="placeholder"
+      [value]="value"
+      [disabled]="isDisabled"
+      (input)="onInputEvent($event)"
+      (blur)="onBlur()"
+    />
+
+    @if (showError) {
+      <div class="error">{{ errorText }}</div>
+    }
+</div>

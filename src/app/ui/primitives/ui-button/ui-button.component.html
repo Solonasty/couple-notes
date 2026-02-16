@@ -1,0 +1,14 @@
+<button
+  [class]="classList.join(' ')"
+  [attr.type]="type"
+  [disabled]="isDisabled"
+  [attr.aria-busy]="loading ? 'true' : null">
+
+    @if (loading) {
+      <span class="ui-btn__spinner" aria-hidden="true"></span>
+    }
+
+    <span class="ui-btn__content" [class.ui-btn__content--hidden]="loading && hideContentWhileLoading">
+      <ng-content />
+    </span>
+</button>

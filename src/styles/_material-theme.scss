@@ -1,0 +1,15 @@
+@use '@angular/material' as mat;
+@use './theme-colors' as m3;
+
+html {
+  color-scheme: light;
+
+  @include mat.theme((
+    color: (
+      primary: m3.$primary-palette,
+      tertiary: m3.$tertiary-palette,
+    ),
+    typography: "SF Pro Display, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+    density: 0,
+  ));
+}

@@ -17,12 +17,15 @@
         <div class="error">{{ error() }}</div>
       }
 
-      <button mat-raised-button color="primary" class="full"
-      type="submit"
-      [disabled]="form.invalid || loading()">
-Войти
-</button>
-
+      <ui-button
+        [full]="true"
+        variant="primary"
+        type="submit"
+        [disabled]="form.invalid"
+        [loading]="loading()"
+      >
+        Войти
+      </ui-button>
     </form>
 
     <div class="links">
