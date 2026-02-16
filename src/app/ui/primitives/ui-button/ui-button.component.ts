@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
-export type UiButtonVariant = 'primary' | 'accent' | 'black' | 'outline' | 'ghost' | 'danger';
+export type UiButtonVariant = 'primary' | 'accent' | 'black' | 'outline' | 'ghost' | 'danger'  | 'next';
 export type UiButtonSize = 'sm' | 'md' | 'lg';
 
 @Component({

@@ -22,15 +22,65 @@ export class AuthService {
   readonly uid = computed(() => this.user()?.uid ?? null);
 
   async signUp(email: string, password: string) {
-    return createUserWithEmailAndPassword(this.auth, email, password);
+    try {
+      return await createUserWithEmailAndPassword(this.auth, email, password);
+    } catch (e: unknown) {
+      throw new Error(mapFirebaseAuthError(e, 'signup'));
+    }
   }
 
   async signIn(email: string, password: string) {
-    await signInWithEmailAndPassword(this.auth, email, password);
-    await firstValueFrom(this.user$.pipe(filter(Boolean), take(1)));
+    try {
+      await signInWithEmailAndPassword(this.auth, email, password);
+      await firstValueFrom(this.user$.pipe(filter(Boolean), take(1)));
+    } catch (e: unknown) {
+      throw new Error(mapFirebaseAuthError(e, 'signin'));
+    }
   }
 
   async logout() {
     return signOut(this.auth);
+  }
+}
+
+type AuthAction = 'signin' | 'signup';
+
+function mapFirebaseAuthError(e: unknown, action: AuthAction): string {
+  const code = (e as any)?.code as string | undefined;
+
+  switch (code) {
+    // sign in
+    case 'auth/invalid-credential':
+    case 'auth/wrong-password':
+      return 'Неверный email или пароль';
+
+    case 'auth/user-not-found':
+      return 'Пользователь с таким email не найден';
+
+    // common
+    case 'auth/invalid-email':
+      return 'Введите корректный email';
+
+    case 'auth/user-disabled':
+      return 'Аккаунт отключён. Обратитесь в поддержку';
+
+    case 'auth/too-many-requests':
+      return 'Слишком много попыток. Попробуйте позже';
+
+    case 'auth/network-request-failed':
+      return 'Проблема с сетью. Проверьте интернет';
+
+    // sign up
+    case 'auth/email-already-in-use':
+      return 'Этот email уже зарегистрирован';
+
+    case 'auth/weak-password':
+      return 'Пароль слишком простой. Используйте минимум 6 символов';
+
+    // fallback
+    default:
+      return action === 'signup'
+        ? 'Не удалось зарегистрироваться. Попробуйте ещё раз'
+        : 'Не удалось войти. Попробуйте ещё раз';
   }
 }

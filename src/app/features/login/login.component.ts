@@ -1,13 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../../core/services/auth.service';
-import { UiButtonComponent } from '../../ui/primitives/ui-button/ui-button.component';
+import { UiButtonComponent, UiInputComponent } from '@/app/ui';
 
 @Component({
   standalone: true,
@@ -15,13 +10,19 @@ import { UiButtonComponent } from '../../ui/primitives/ui-button/ui-button.compo
   imports: [
     RouterLink,
     ReactiveFormsModule,
-    MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, UiButtonComponent
+    UiButtonComponent,
+    UiInputComponent
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
 
 export class LoginComponent {
+
+  constructor() {
+    this.form.valueChanges.subscribe(() => this.error.set(null));
+  }
+
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);

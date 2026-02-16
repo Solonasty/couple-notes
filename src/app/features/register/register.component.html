@@ -1,37 +1,56 @@
-<div class="wrap">
-    <mat-card class="card">
-      <mat-card-title>Регистрация</mat-card-title>
-  
-      <form [formGroup]="form" (ngSubmit)="submit()">
+<div class="page">
+  <h1 class="title">Регистрация</h1>
 
-        <mat-form-field appearance="outline" class="full">
-          <mat-label>Имя</mat-label>
-          <input matInput formControlName="name" autocomplete="name" />
-        </mat-form-field>
-        
-        <mat-form-field appearance="outline" class="full">
-          <mat-label>Email</mat-label>
-          <input matInput formControlName="email" autocomplete="email" />
-        </mat-form-field>
-  
-        <mat-form-field appearance="outline" class="full">
-          <mat-label>Пароль</mat-label>
-          <input matInput type="password" formControlName="password" autocomplete="new-password" />
-        </mat-form-field>
-  
-        @if (error()) {
-          <div class="error">{{ error() }}</div>
-        }
-  
-        <button mat-raised-button color="primary" class="full"
-                type="submit" [disabled]="form.invalid || loading()">
-          Создать аккаунт
-        </button>
-      </form>
-  
-      <div class="links">
-        Уже есть аккаунт? <a routerLink="/auth/login">Войти</a>
+  <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+
+    <div class="fields">
+      <ui-input
+        formControlName="name"
+        type="text"
+        placeholder="Имя"
+        autocomplete="name">
+      </ui-input>
+
+      <ui-input
+        formControlName="email"
+        type="email"
+        placeholder="Email"
+        autocomplete="email">
+      </ui-input>
+
+      <ui-input
+        formControlName="password"
+        type="password"
+        placeholder="Пароль"
+        autocomplete="new-password"
+      ></ui-input>
+    </div>
+
+    @if (error()) {
+      <div class="form-error" role="alert">
+        {{ error() }}
       </div>
-    </mat-card>
-  </div>
-  
+    }
+
+    <div class="actions">
+      <ui-button
+        [full]="true"
+        variant="next"
+        type="submit"
+        [disabled]="form.invalid"
+        [loading]="loading()">
+        СОЗДАТЬ АККАУНТ
+      </ui-button>
+
+      <ui-button
+        [full]="true"
+        variant="outline"
+        type="button"
+        [disabled]="loading()"
+        routerLink="/auth/login">
+        Уже есть аккаунт? Войти
+      </ui-button>
+    </div>
+
+  </form>
+</div>

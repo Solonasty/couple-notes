@@ -26,7 +26,7 @@
   user-select: none;
 
   font: var(--mat-sys-label-large);
-  font-weight: 700;
+  font-weight: 300;
   letter-spacing: 0.2px;
 
   display: inline-flex;
@@ -43,7 +43,7 @@
   &:hover:not(:disabled) { background: var(--ui-btn-hover-bg); }
   &:active:not(:disabled) { transform: scale(.99); background: var(--ui-btn-active-bg); }
 
-  &:disabled { opacity: .55; cursor: default; }
+  &:disabled { opacity: .7; cursor: default; }
 
   &:focus-visible {
     outline: 0;
@@ -101,7 +101,40 @@
   --ui-btn-border: transparent;
 }
 
-/* loading */
+.ui-btn--next {
+  --ui-btn-bg: var(--app-next-bg, #E9FF73);
+  --ui-btn-fg: var(--app-color-black);
+  --ui-btn-border: transparent;
+
+  --ui-btn-hover-bg: color-mix(in oklab, var(--ui-btn-bg) 92%, black);
+  --ui-btn-active-bg: color-mix(in oklab, var(--ui-btn-bg) 88%, black);
+  --ui-btn-focus-ring: color-mix(in oklab, var(--ui-btn-bg) 35%, transparent);
+
+  justify-content: space-between;
+  padding-left: 18px;
+  padding-right: 10px;
+
+  font-weight: 500;
+  letter-spacing: 0.12px;
+}
+
+.ui-btn--next::after {
+  content: "";
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+
+  background:
+    color-mix(in oklab, black 12%, transparent)
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'><path d='M10 6l6 6-6 6'/></svg>")
+    no-repeat center / 18px;
+}
+
+.ui-btn--next.ui-btn--loading::after {
+  opacity: 0.6;
+}
+
 .ui-btn__spinner {
   width: 16px;
   height: 16px;

@@ -1,38 +1,69 @@
-:host { display: block; }
-
-.field {
-  display: grid;
-  gap: 8px;
-  padding: 14px 16px;
-  border-radius: 14px;
-
-  background: var(--ui-input-bg, transparent);
-  border: 1px solid var(--ui-input-border, rgba(0,0,0,.14));
+:host {
+  display: block;
 }
 
-.label {
-  font-size: 14px;
-  line-height: 1.1;
-  color: var(--ui-input-label, rgba(0,0,0,.65));
+.ui-input-wrap {
+  width: 100%;
 }
 
-.input {
-  border: 0;
-  outline: 0;
+.ui-input {
+  width: 100%;
+
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+.ui-input .mdc-notched-outline {
+  display: none;
+}
+
+.ui-input .mat-mdc-text-field-wrapper {
+  height: 52px;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in oklab, var(--mat-sys-on-surface) 22%, transparent);
   background: transparent;
-  padding: 0;
-  font: var(--mat-sys-body-large);
-  color: var(--ui-input-text, var(--app-text));
+  overflow: hidden;
+
+  --mdc-outlined-text-field-input-text-font: var(--app-font-family);
+  --mdc-outlined-text-field-input-text-size: 16px;
+  --mdc-outlined-text-field-input-text-weight: 300;
+  --mdc-outlined-text-field-input-text-color: var(--mat-sys-on-surface);
+  --mdc-outlined-text-field-caret-color: var(--mat-sys-on-surface);
 }
 
-.error {
-  font-size: 12px;
-  opacity: .9;
-  color: #ff6b6b;
+.ui-input .mat-mdc-form-field-infix {
+  padding: 14px 0;
+  min-height: 0;
 }
 
-.invalid {
-  border-color: rgba(255, 107, 107, .75);
+.ui-input:hover .mat-mdc-text-field-wrapper {
+  border-color: color-mix(in oklab, var(--mat-sys-on-surface) 30%, transparent);
 }
 
-.full { width: 100%; }
+.ui-input.mat-focused .mat-mdc-text-field-wrapper {
+  border-color: color-mix(in oklab, var(--mat-sys-on-surface) 30%, transparent);
+}
+
+.ui-input input::placeholder {
+  color: color-mix(in oklab, var(--mat-sys-on-surface) 45%, transparent);
+  opacity: 1;
+}
+
+.ui-input.ui-input--invalid .mat-mdc-text-field-wrapper {
+  border-color: var(--mat-sys-error);
+}
+
+.ui-input__sub {
+  padding: 6px 10px 0;
+  font: var(--mat-sys-body-small);
+  letter-spacing: var(--mat-sys-body-small-tracking);
+}
+
+.ui-input__hint {
+  opacity: 0.7;
+}
+
+.ui-input__error {
+  color: var(--mat-sys-error);
+}

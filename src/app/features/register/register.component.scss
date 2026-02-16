@@ -1,0 +1,39 @@
+.page {
+    min-height: 100vh;
+    padding: 28px 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.title {
+    margin: 0 0 14px;
+}
+
+.form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.actions {
+    margin-top: auto;
+    display: grid;
+    gap: 12px;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.fields {
+    display: grid;
+    gap: 12px;
+}
+
+.form-error {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in oklab, var(--mat-sys-error) 45%, transparent);
+    background: color-mix(in oklab, var(--mat-sys-error) 10%, transparent);
+    color: var(--mat-sys-error);
+    font: var(--mat-sys-body-small);
+    letter-spacing: var(--mat-sys-body-small-tracking);
+}

@@ -1,18 +1,26 @@
-<div class="field" [class.full]="full" [class.invalid]="showError">
-    <label class="label">{{ label }}</label>
+<div class="ui-input-wrap">
+  <mat-form-field
+    class="ui-input"
+    appearance="outline"
+    subscriptSizing="dynamic"
+    [class.ui-input--invalid]="isInvalid"
+    [class.ui-input--disabled]="disabled">
 
     <input
-      class="input"
+      matInput
       [type]="type"
-      [autocomplete]="autocomplete"
       [placeholder]="placeholder"
+      [autocomplete]="autocomplete"
+      [disabled]="disabled"
       [value]="value"
-      [disabled]="isDisabled"
-      (input)="onInputEvent($event)"
-      (blur)="onBlur()"
-    />
+      (input)="onInput($event)"
+      (blur)="markTouched()"
+      [attr.aria-label]="ariaLabel || placeholder"/>
+  </mat-form-field>
 
-    @if (showError) {
-      <div class="error">{{ errorText }}</div>
-    }
+  @if (errorMessage) {
+    <div class="ui-input__sub ui-input__error">{{ errorMessage }}</div>
+  } @else if (hint) {
+    <div class="ui-input__sub ui-input__hint">{{ hint }}</div>
+  }
 </div>
