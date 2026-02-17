@@ -2,74 +2,105 @@
     <mat-sidenav
         #drawer
         class="sidenav"
+        [class.sidenav--mobile]="isMobile()"
         [mode]="isMobile() ? 'over' : 'side'"
         [opened]="!isMobile()"
-        [fixedInViewport]="isMobile()"
-        fixedTopGap="56">
+        [fixedInViewport]="isMobile()">
 
-        <div class="logo">Couple Notes</div>
+        <!-- DESKTOP -->
+        @if (!isMobile()) {
+            <div class="logo">Couple Notes</div>
 
-        <mat-nav-list>
-            <a mat-list-item routerLink="/app/dashboard" routerLinkActive="active">
-                <!-- <mat-icon class="material-symbols-outlined">dashboard</mat-icon> -->
-                <ui-icon name="cabinet" size="md"></ui-icon>
-                <span>Кабинет</span>
+            <mat-nav-list>
+                <a mat-list-item routerLink="/app/dashboard" routerLinkActive="active">
+                    <ui-icon name="cabinet" size="lg" class="ui-icon-desc"></ui-icon>
+                    <span>Кабинет</span>
+                </a>
 
-            </a>
+                <a mat-list-item routerLink="/app/pair" routerLinkActive="active">
+                    <ui-icon name="couples" size="lg" class="ui-icon-desc"></ui-icon>
+                    <span>Пара</span>
+                </a>
 
-            <a mat-list-item routerLink="/app/pair" routerLinkActive="active">
-                <mat-icon class="material-symbols-outlined">dashboard</mat-icon>
-                <span>Пары</span>
+                <a mat-list-item routerLink="/app/notes" routerLinkActive="active">
+                    <ui-icon name="notes" size="lg" class="ui-icon-desc"></ui-icon>
+                    <span>Заметки</span>
+                </a>
 
-            </a>
+                <a mat-list-item routerLink="/app/weekly" routerLinkActive="active">
+                    <ui-icon name="report" size="lg" class="ui-icon-desc"></ui-icon>
+                    <span>Отчет</span>
+                </a>
 
-            <a mat-list-item routerLink="/app/notes" routerLinkActive="active">
-                <mat-icon class="material-symbols-outlined">edit_note</mat-icon>
-                <span>Заметки</span>
-            </a>
+                <a mat-list-item routerLink="/app/ui-kit" routerLinkActive="active">
+                    <span>UI Kit</span>
+                </a>
+            </mat-nav-list>
 
-            <a mat-list-item routerLink="/app/weekly" routerLinkActive="active">
-                <mat-icon class="material-symbols-outlined">summarize</mat-icon>
-                <span>Сводка</span>
-            </a>
+            @if (user()) {
+                <div class="user">{{ user()?.email }}</div>
+            }
 
-            <a mat-list-item routerLink="/app/ui-kit" routerLinkActive="active">
-                <mat-icon class="material-symbols-outlined">ui-kit</mat-icon>
-                <span>UI Kit</span>
-            </a>
-        </mat-nav-list>
-
-        <div class="spacer"></div>
-
-        @if (user()) {
-        <div class="user">
-            {{ user()?.email }}
-        </div>
+            <button mat-button (click)="logout()" class="logout_btn">
+                <ui-icon name="logout" size="lg"></ui-icon>
+                <span>Выйти</span>
+            </button>
         }
-
-        <button mat-button (click)="logout()">
-        <mat-icon class="material-symbols-outlined">logout</mat-icon>
-        Выйти
-        </button>
     </mat-sidenav>
 
     <mat-sidenav-content>
         <mat-toolbar color="primary" class="toolbar">
             @if (isMobile()) {
-            <button
-                mat-icon-button
-                (click)="drawer.toggle()"
-                aria-label="Open menu">
-                <mat-icon class="material-symbols-outlined">menu</mat-icon>
-            </button>
-            }
+                <div class="account">
+                    <div class="avatar">{{ initials() }}</div>
+                    <div class="account-text">
+                        <div class="account-name">{{ accountName() }}</div>
+                    </div>
+                </div>
 
-            <span>Couple Notes</span>
-            <span class="toolbar-spacer"></span>
+                <button mat-icon-button class="logout-btn" (click)="logout()" aria-label="Выйти">
+                    <ui-icon name="logout" size="lg"></ui-icon>
+                </button>
+            }
         </mat-toolbar>
 
-        <main class="content">
+        <main class="content" [class.content--mobile]="isMobile()">
             <router-outlet />
         </main>
+
+        @if (isMobile()) {
+            <div class="bottom-nav-wrap" aria-label="Навигация">
+                <nav class="bottom-bar">
+                    <a class="tab" routerLink="/app/pair" routerLinkActive="tab--active">
+                        <ui-icon name="couples" size="lg"></ui-icon>
+                        <span>Пара</span>
+                    </a>
+
+                    <a class="tab" routerLink="/app/notes" routerLinkActive="tab--active">
+                        <ui-icon name="notes" size="lg"></ui-icon>
+                        <span>Заметки</span>
+                    </a>
+
+                    <a class="tab" routerLink="/app/weekly" routerLinkActive="tab--active">
+                        <ui-icon name="report" size="lg"></ui-icon>
+                        <span>Отчет</span>
+                    </a>
+
+                    <a class="tab" routerLink="/app/dashboard" routerLinkActive="tab--active">
+                        <ui-icon name="cabinet" size="lg"></ui-icon>
+                        <span>Кабинет</span>
+                    </a>
+                </nav>
+
+                <button
+                    mat-fab
+                    color="primary"
+                    class="fab"
+                    routerLink="/app/ui-kit"
+                    aria-label="UI Kit">
+                    <ui-icon name="add" size="hg"></ui-icon>
+                </button>
+            </div>
+        }
     </mat-sidenav-content>
 </mat-sidenav-container>

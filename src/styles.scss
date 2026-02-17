@@ -3,3 +3,12 @@
 @use './styles/tokens';
 @use './styles/material-theme';
 @use './styles/base';
+
+.mdc-list-item__primary-text {
+    display: flex;
+}
+
+.mdc-button__label {
+    display: flex;
+    align-items: center;
+}

@@ -1,5 +1,4 @@
 .ui-btn {
-  /* базовые значения (fallback) */
   --ui-btn-bg: var(--mat-sys-primary);
   --ui-btn-fg: var(--mat-sys-on-primary);
   --ui-btn-border: transparent;
@@ -43,7 +42,10 @@
   &:hover:not(:disabled) { background: var(--ui-btn-hover-bg); }
   &:active:not(:disabled) { transform: scale(.99); background: var(--ui-btn-active-bg); }
 
-  &:disabled { opacity: .7; cursor: default; }
+  &:disabled {
+    // opacity: .7;
+    cursor: default;
+  }
 
   &:focus-visible {
     outline: 0;

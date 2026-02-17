@@ -33,8 +33,9 @@ function getTestFirestore(): FirebaseFirestore {
 
   _fs = getFirestore(_app);
 
-  // ✅ чтобы тесты не ходили в сеть
-  void disableNetwork(_fs).catch(() => {});
+  void disableNetwork(_fs).catch((err) => {
+    console.warn('[test] disableNetwork failed:', err);
+  });
 
   return _fs;
 }
@@ -49,7 +50,6 @@ export function provideAppTestProviders() {
   } as unknown as UserCredential;
 
   return [
-    // ✅ даём настоящий FirebaseFirestore, а не {}
     { provide: Firestore, useFactory: getTestFirestore },
 
     {
@@ -57,9 +57,8 @@ export function provideAppTestProviders() {
       useValue: {
         user$: of(userMock),
         user: signal<User | null>(userMock),
-
-        signIn: async (_email: string, _password: string) => undefined,
-        signUp: async (_email: string, _password: string) => userCredentialMock,
+        signIn: async () => undefined,
+        signUp: async () => userCredentialMock,
         logout: async () => undefined,
       } satisfies Partial<AuthService>,
     },

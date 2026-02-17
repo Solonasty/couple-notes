@@ -1,12 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { BreakpointObserver, Breakpoints, LayoutModule } from '@angular/cdk/layout';
 
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatListModule } from '@angular/material/list';
-import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatListModule } from '@angular/material/list';
+
 import { AuthService } from '../services/auth.service';
 import { UiIconComponent } from '@/app/ui';
 
@@ -20,15 +21,14 @@ import { UiIconComponent } from '@/app/ui';
     LayoutModule,
     MatSidenavModule,
     MatToolbarModule,
-    MatListModule,
-    MatIconModule,
     MatButtonModule,
-    UiIconComponent
+    MatIconModule,
+    MatListModule,
+    UiIconComponent,
   ],
   templateUrl: './shell.component.html',
-  styleUrl: './shell.component.scss'
+  styleUrl: './shell.component.scss',
 })
-
 export class ShellComponent {
   private bo = inject(BreakpointObserver);
   private auth = inject(AuthService);
@@ -39,6 +39,20 @@ export class ShellComponent {
 
   constructor() {
     this.bo.observe([Breakpoints.XSmall]).subscribe(r => this.isMobile.set(r.matches));
+  }
+
+  accountName(): string {
+    const email = this.user()?.email;
+    if (!email) return 'Couple Notes';
+    return email.split('@')[0];
+  }
+
+  initials(): string {
+    const name = this.accountName().trim();
+    const parts = name.split(/\s+/).filter(Boolean);
+    const a = parts[0]?.[0] ?? 'C';
+    const b = parts[1]?.[0] ?? (parts[0]?.[1] ?? 'N');
+    return (a + b).toUpperCase();
   }
 
   async logout() {

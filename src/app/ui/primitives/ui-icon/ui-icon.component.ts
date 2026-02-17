@@ -11,7 +11,7 @@ import type { AppIconName } from '@/app/core/services/icon-registry.service';
 })
 export class UiIconComponent {
   @Input({ required: true }) name!: AppIconName;
-  @Input() size: 'sm' | 'md' | 'lg' = 'md';
+  @Input() size: 'sm' | 'md' | 'lg' | 'hg' = 'md';
 
   @HostBinding('attr.data-size')
   get dataSize() {
