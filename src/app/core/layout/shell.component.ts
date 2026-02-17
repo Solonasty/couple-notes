@@ -8,6 +8,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../services/auth.service';
+import { UiIconComponent } from '@/app/ui';
 
 @Component({
   standalone: true,
@@ -22,6 +23,7 @@ import { AuthService } from '../services/auth.service';
     MatListModule,
     MatIconModule,
     MatButtonModule,
+    UiIconComponent
   ],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss'

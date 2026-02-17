@@ -2,9 +2,21 @@
   <h1 class="title">Войти в CoupleNotes</h1>
 
   <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+
     <div class="fields">
-      <ui-input formControlName="email" type="email" placeholder="Email" autocomplete="email"></ui-input>
-      <ui-input formControlName="password" type="password" placeholder="Пароль" autocomplete="current-password"></ui-input>
+      <ui-input
+        formControlName="email"
+        type="email"
+        placeholder="Email"
+        autocomplete="email">
+      </ui-input>
+
+      <ui-input
+        formControlName="password"
+        type="password"
+        placeholder="Пароль"
+        autocomplete="current-password">
+      </ui-input>
     </div>
 
     @if (error()) {
@@ -32,5 +44,6 @@
         ЗАРЕГИСТРИРОВАТЬСЯ
       </ui-button>
     </div>
+
   </form>
 </div>
