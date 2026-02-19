@@ -1,124 +1,106 @@
-<!-- Верхняя панель -->
-<div class="top-bar">
-  <div class="title">
-    <span>Заметки</span>
-    <span class="count">({{ notesCount() }})</span>
-  </div>
+<section class="notes">
+  <!-- LIST -->
+  <div class="list" [class.dimmed]="isDetailOpen()">
+    <header class="header">
+      <div class="title">
+        <h1 class="h1">Заметки</h1>
+        <span class="count">( {{ notesCount() }} )</span>
+      </div>
 
-  @if (!inPair()) {
-    <div class="hint">
-      Вы сможете добавлять заметки, когда вступите в пару
-    </div>
-  } @else if (!isAdding()) {
-    <button mat-raised-button color="primary" (click)="openAdd()">
-      <mat-icon class="material-symbols-outlined">add</mat-icon>
-      Добавить
-    </button>
-  }
-</div>
+      @if (!inPair()) {
+        <div class="hint">Вступите в пару, чтобы добавлять и видеть заметки</div>
+      } @else {
+        <ui-button
+        (click)="openNew()"
+        [full]="true"
+        variant="outline"
+        type="button"
+        [loading]="loading()">
+        Добавить
+      </ui-button>
+      }
+    </header>
 
-<!-- Карточка добавления заметки -->
-@if (isAdding() && inPair()) {
-  <mat-card class="add-card" animate.enter="note-enter">
-    <mat-card-title>Новая заметка</mat-card-title>
-
-    <mat-card-content>
-      <form class="add-form" [formGroup]="form" (ngSubmit)="addNote()">
-        <mat-form-field appearance="outline" class="full">
-          <mat-label>Текст заметки</mat-label>
-          <textarea
-            matInput
-            rows="4"
-            formControlName="text"
-            placeholder="Напишите заметку…"
-          ></textarea>
-          <mat-hint align="end">
-            {{ form.controls.text.value.length }} / 5000
-          </mat-hint>
-        </mat-form-field>
-
-        <div class="actions">
-          <button mat-button type="button" (click)="cancelAdd()">Отмена</button>
-          <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
-            Сохранить
-          </button>
-        </div>
-      </form>
-    </mat-card-content>
-  </mat-card>
-}
-
-<!-- Карточка списка заметок -->
-<mat-card>
-  <mat-card-content>
     @if (!inPair()) {
-      <p class="empty">
-        Вы сможете добавлять и видеть заметки, когда вступите в пару.
-      </p>
+      <p class="empty">Вы сможете добавлять и видеть заметки, когда вступите в пару.</p>
     } @else if (notes().length === 0) {
-      <p class="empty">Пока нет заметок. Нажмите «Добавить».</p>
+      <p class="empty">Пока нет заметок. Нажмите “+”.</p>
     } @else {
-      <div class="list">
-        @for (n of notes(); track n.id) {
-          <mat-card class="note" animate.enter="panel-enter" animate.leave="panel-leave">
-            <mat-card-content>
-              <div class="note-header">
-                <div class="note-date">
-                  {{ n.createdAt?.toDate?.() | date:'dd.MM.yyyy, HH:mm' }}
-                </div>
-
-                <div class="note-actions">
-                  <button
-                    mat-icon-button
-                    type="button"
-                    (click)="startEdit(n)"
-                    aria-label="Edit note"
-                    [disabled]="!inPair() || (editingId() && editingId() !== n.id)"
-                  >
-                    <mat-icon class="material-symbols-outlined">edit</mat-icon>
-                  </button>
-
-                  <button
-                    mat-icon-button
-                    type="button"
-                    (click)="deleteNote(n.id)"
-                    aria-label="Delete note"
-                    [disabled]="!inPair() || editingId() === n.id"
-                  >
-                    <mat-icon class="material-symbols-outlined">delete</mat-icon>
-                  </button>
-                </div>
-              </div>
-
-              @if (editingId() === n.id) {
-                <form [formGroup]="editForm" (ngSubmit)="saveEdit(n.id)">
-                  <mat-form-field appearance="outline" class="full">
-                    <mat-label>Редактировать заметку</mat-label>
-                    <textarea matInput rows="4" formControlName="text"></textarea>
-                    <mat-hint align="end">
-                      {{ editForm.controls.text.value.length }} / 5000
-                    </mat-hint>
-                  </mat-form-field>
-
-                  <div class="actions">
-                    <button mat-button type="button" (click)="cancelEdit()">Отмена</button>
-                    <button
-                      mat-raised-button
-                      color="primary"
-                      type="submit"
-                      [disabled]="editForm.invalid"
-                    >
-                      Сохранить
-                    </button>
-                  </div>
-                </form>
-              } @else {
-                <div class="note-text">{{ n.text }}</div>
-              }
-            </mat-card-content>
-          </mat-card>
+      <div class="grid" role="list">
+        @for (n of notes(); track n.id; let i = $index) {
+          <article
+            class="card note"
+            [ngClass]="noteColorClass(n, i)"
+            role="button"
+            tabindex="0"
+            (click)="openExisting(n.id)"
+          >
+            <div class="meta">{{ n.createdAt?.toDate?.() | date:'dd.MM.yyyy, HH:mm' }}</div>
+            <div class="text">{{ n.text }}</div>
+          </article>
         }
       </div>
     }
-  </mat-card-content>
-</mat-card>
+  </div>
+
+  <!-- DETAIL OVERLAY -->
+  @if (isDetailOpen()) {
+    <div class="detail" [class.closing]="closing()">
+      <div class="detail-bar">
+        <ui-button
+          (click)="back()"
+          variant="ghost"
+          type="button"
+          [disabled]="loading()">
+          <ui-icon name="arrow_back"></ui-icon>
+          <span>Назад</span>
+        </ui-button>
+
+        @if (isEditMode()) {
+          <ui-button
+            (click)="deleteCurrent()"
+            variant="ghost"
+            type="button"
+            [disabled]="loading()"
+            [iconOnly]="true"
+            aria-label="Удалить">
+            <ui-icon class="danger-ink" name="delete" data-size="lg"></ui-icon>
+          </ui-button>
+        } @else {
+          <div class="right-placeholder"></div>
+        }
+      </div>
+
+
+      @if (isEditMode() && openedNote(); as note) {
+        <h1 class="detail-meta">Редактирование</h1>
+
+        <div class="detail-meta-row">
+          <span class="meta-chip">
+            {{ note.createdAt?.toDate?.() | date:'dd.MM.yyyy, HH:mm' }}
+          </span>
+
+          <span class="meta-chip">
+            <span class="dot" [class.saving]="saving()" [class.saved]="!saving()"></span>
+            {{ saving() ? 'Сохраняю…' : 'Сохранено' }}
+          </span>
+        </div>
+      } @else {
+        <h1 class="detail-meta">Новая заметка</h1>
+      }
+
+
+      <form class="detail-body" [formGroup]="editorForm">
+        <div class="editor-card">
+          <textarea
+            class="detail-textarea"
+            rows="10"
+            formControlName="text"
+            placeholder="Текст заметки…"
+          ></textarea>
+        </div>
+      </form>
+
+    </div>
+  }
+</section>

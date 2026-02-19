@@ -2,7 +2,17 @@ import { Injectable, inject } from '@angular/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 
-export const APP_ICONS = ['cabinet', 'notes', 'couples', 'logout', 'report', 'add'] as const;
+export const APP_ICONS = [
+  'cabinet',
+  'notes',
+  'couples',
+  'logout',
+  'report',
+  'add',
+  'delete',
+  'arrow_back',
+  'edit',
+] as const;
 export type AppIconName = (typeof APP_ICONS)[number];
 
 @Injectable({ providedIn: 'root' })

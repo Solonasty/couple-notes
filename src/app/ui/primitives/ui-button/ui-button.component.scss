@@ -1,4 +1,8 @@
 .ui-btn {
+  --ui-btn-fs: 16px; /* базовый размер */
+
+  font: var(--mat-sys-label-large);
+
   --ui-btn-bg: var(--mat-sys-primary);
   --ui-btn-fg: var(--mat-sys-on-primary);
   --ui-btn-border: transparent;
@@ -7,7 +11,7 @@
   --ui-btn-active-bg: color-mix(in oklab, var(--ui-btn-bg) 88%, black);
   --ui-btn-focus-ring: color-mix(in oklab, var(--mat-sys-primary) 30%, transparent);
 
-  --ui-btn-h: 56px;
+  --ui-btn-h: 36px;
   --ui-btn-px: 18px;
   --ui-btn-radius: 999px;
   --ui-btn-gap: 10px;
@@ -51,14 +55,16 @@
     outline: 0;
     box-shadow: 0 0 0 3px var(--ui-btn-focus-ring);
   }
+  font-size: 16px;                  /* <-- обязательно ниже, чтобы перебить */
 }
 
 .ui-btn--full { width: 100%; }
 
 /* sizes */
-.ui-btn--sm { --ui-btn-h: 40px; --ui-btn-px: 14px; --ui-btn-gap: 8px; }
-.ui-btn--md { --ui-btn-h: 56px; --ui-btn-px: 18px; --ui-btn-gap: 10px; }
-.ui-btn--lg { --ui-btn-h: 64px; --ui-btn-px: 20px; --ui-btn-gap: 12px; }
+.ui-btn--sm { --ui-btn-h: 26px; --ui-btn-px: 14px; --ui-btn-gap: 8px;  --ui-btn-fs: 14px; }
+.ui-btn--md { --ui-btn-h: 36px; --ui-btn-px: 18px; --ui-btn-gap: 10px; --ui-btn-fs: 16px; }
+.ui-btn--lg { --ui-btn-h: 54px; --ui-btn-px: 20px; --ui-btn-gap: 12px; --ui-btn-fs: 18px; }
+
 
 /* variants (только переменные!) */
 .ui-btn--primary {
@@ -98,9 +104,9 @@
 }
 
 .ui-btn--danger {
-  --ui-btn-bg: var(--mat-sys-error);
-  --ui-btn-fg: var(--mat-sys-on-error);
-  --ui-btn-border: transparent;
+  --ui-btn-bg: transparent;
+  --ui-btn-fg: var(--mat-sys-error);
+  --ui-btn-border: var(--mat-sys-error);
 }
 
 .ui-btn--next {
@@ -146,9 +152,26 @@
   animation: uiBtnSpin .7s linear infinite;
 }
 
+.ui-btn__content {
+  display: flex;
+}
+
 .ui-btn__content--hidden {
   opacity: 0;
 }
+
+.ui-btn--icon {
+  width: var(--ui-btn-h);
+  padding: 0;
+  --ui-btn-gap: 0;
+}
+
+.ui-btn--icon .ui-btn__content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 
 @keyframes uiBtnSpin {
   to { transform: rotate(360deg); }

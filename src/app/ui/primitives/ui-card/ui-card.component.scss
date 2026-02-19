@@ -1,0 +1,44 @@
+:host { display: block; }
+
+.ui-note-card {
+  border-radius: 16px; // как .note
+}
+
+.ui-note-card--accent {
+  margin-bottom: 16px;
+  border-left: 4px solid var(--mat-sys-primary);
+}
+
+.ui-note-card__meta {
+  padding: 0 16px 8px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.ui-note-card__full { width: 100%; }
+
+.ui-note-card__form {
+  display: grid;
+  gap: 12px;
+}
+
+.ui-note-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Dense: чуть ближе к обычной note-карточке */
+.ui-note-card--dense {
+  .ui-note-card__meta {
+    padding-top: 4px;
+    padding-bottom: 6px;
+  }
+}
+
+/* Анимация как у тебя */
+.note-enter { animation: noteIn 160ms ease-out; }
+@keyframes noteIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

@@ -21,6 +21,8 @@ export class UiButtonComponent {
   @Input() loading = false;
 
   @Input() hideContentWhileLoading = false;
+  @Input() iconOnly = false;
+
 
   get isDisabled() {
     return this.disabled || this.loading;
@@ -33,6 +35,8 @@ export class UiButtonComponent {
       `ui-btn--${this.size}`,
       this.full ? 'ui-btn--full' : '',
       this.loading ? 'ui-btn--loading' : '',
+      this.iconOnly ? 'ui-btn--icon' : '',
+
     ].filter(Boolean);
   }
 }

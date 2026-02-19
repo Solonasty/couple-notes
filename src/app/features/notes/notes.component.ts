@@ -1,87 +1,253 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
-import { DatePipe } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatDividerModule } from '@angular/material/divider';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { DatePipe, NgClass } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { EMPTY, from } from 'rxjs';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  map,
+  switchMap,
+  tap,
+  catchError,
+  finalize,
+} from 'rxjs/operators';
+
 import { NotesService } from '../../core/services/notes.service';
 import { Note } from '../../core/services/pair.types';
 import { PairContextService } from '../../core/services/pair-context.service';
+import { UiButtonComponent, UiIconComponent } from '@/app/ui';
+import { MatIcon } from '@angular/material/icon';
+
+type DetailMode = 'edit' | 'create';
 
 @Component({
   standalone: true,
   selector: 'app-notes',
-  imports: [
-    ReactiveFormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatDividerModule,
-    DatePipe,
-  ],
+  imports: [ReactiveFormsModule, DatePipe,NgClass, UiButtonComponent, UiIconComponent],
   templateUrl: './notes.component.html',
   styleUrl: './notes.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotesComponent {
-  private fb = new FormBuilder();
+  private fb = inject(FormBuilder);
   private notesService = inject(NotesService);
   private pairCtx = inject(PairContextService);
+  private destroyRef = inject(DestroyRef);
+  readonly loading = signal(false);
 
+  // data
   readonly activePair = toSignal(this.pairCtx.activePair$, { initialValue: null });
   readonly inPair = computed(() => !!this.activePair());
-  readonly isAdding = signal(false);
+
   readonly notes = toSignal(this.notesService.notes$(), { initialValue: [] as Note[] });
   readonly notesCount = computed(() => (this.notes() ?? []).length);
-  readonly editingId = signal<string | null>(null);
 
-  readonly form = this.fb.nonNullable.group({
-    text: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(5000)]],
+  // detail overlay state
+  readonly detailMode = signal<DetailMode>('edit');
+  readonly openedId = signal<string | null>(null);
+
+  readonly isDetailOpen = computed(() => this.detailMode() === 'create' || !!this.openedId());
+  readonly isEditMode = computed(() => this.detailMode() === 'edit');
+  readonly deleting = signal(false);
+
+
+  readonly openedNote = computed<Note | null>(() => {
+    const id = this.openedId();
+    if (!id) return null;
+    return (this.notes() ?? []).find((n) => n.id === id) ?? null;
   });
 
-  readonly editForm = this.fb.nonNullable.group({
-    text: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(5000)]],
+  // UI state
+  readonly closing = signal(false);
+
+  // editor
+  readonly editorForm = this.fb.nonNullable.group({
+    text: ['', [Validators.maxLength(5000)]],
   });
 
-  openAdd() { this.isAdding.set(true); this.form.reset({ text: '' }); }
-  cancelAdd() { this.isAdding.set(false); this.form.reset({ text: '' }); }
+  // saving state (for edit mode)
+  readonly saving = signal(false);
+  private lastSavedTrim = signal<string>(''); // trimmed text saved on server
 
-  startEdit(note: Note) {
-    this.editingId.set(note.id);
-    this.editForm.reset({ text: note.text });
+  constructor() {
+    // when opening an existing note -> set editor content
+    effect(() => {
+      if (!this.isDetailOpen()) return;
+
+      if (this.detailMode() === 'create') {
+        // new note
+        this.editorForm.reset({ text: '' }, { emitEvent: false });
+        this.lastSavedTrim.set('');
+        this.closing.set(false);
+        return;
+      }
+
+      // edit existing
+      const note = this.openedNote();
+      if (!note) return;
+
+      const text = (note.text ?? '').toString();
+      this.editorForm.reset({ text }, { emitEvent: false });
+      this.lastSavedTrim.set(text.trim());
+      this.closing.set(false);
+    });
+
+    // autosave only for edit mode
+    this.editorForm.controls.text.valueChanges
+      .pipe(
+        map((v) => (v ?? '').toString()),
+        debounceTime(450),
+        distinctUntilChanged(),
+        filter(() => this.isDetailOpen() && this.isEditMode() && !!this.openedId()),
+        map((v) => v.trim()),
+        filter((trimmed) => trimmed !== this.lastSavedTrim()),
+        switchMap((trimmed) => {
+          const id = this.openedId();
+          if (!id) return EMPTY;
+
+          this.saving.set(true);
+          return from(this.notesService.update(id, trimmed)).pipe(
+            tap(() => this.lastSavedTrim.set(trimmed)),
+            finalize(() => this.saving.set(false)),
+            catchError(() => {
+              this.saving.set(false);
+              return EMPTY;
+            })
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe();
+
+    // if note disappears while open (например удалили) -> закрыть
+    effect(() => {
+      if (!this.isDetailOpen()) return;
+    
+      if (
+        this.isEditMode() &&
+        this.openedId() &&
+        !this.openedNote() &&
+        !this.closing() &&
+        !this.deleting()
+      ) {
+        void this.close(false);
+      }
+    });
+    
+
+    // safety: flush on destroy
+    this.destroyRef.onDestroy(() => void this.flushSave());
   }
 
-  cancelEdit() {
-    this.editingId.set(null);
-    this.editForm.reset({ text: '' });
+  // ===== OPENERS =====
+
+  openNew() {
+    if (!this.inPair()) return;
+    if (this.isDetailOpen()) return;
+
+    this.detailMode.set('create');
+    this.openedId.set(null);
+    this.closing.set(false);
   }
 
-  async addNote() {
-    if (this.form.invalid) return;
-    const text = this.form.getRawValue().text.trim();
-    if (!text) return;
+  openExisting(id: string) {
+    if (!this.inPair()) return;
+    if (this.isDetailOpen()) return;
 
-    await this.notesService.add(text);
+    const note = (this.notes() ?? []).find((n) => n.id === id);
+    if (!note) return;
 
-    this.isAdding.set(false);
-    this.form.reset({ text: '' });
+    this.detailMode.set('edit');
+    this.openedId.set(id);
+    this.closing.set(false);
   }
 
-  async saveEdit(noteId: string) {
-    if (this.editForm.invalid) return;
-    const text = this.editForm.getRawValue().text.trim();
-    if (!text) return;
+  // ===== ACTIONS =====
 
-    await this.notesService.update(noteId, text);
-    this.cancelEdit();
+  async back() {
+    await this.close(true);
   }
 
-  async deleteNote(id: string) {
-    await this.notesService.remove(id);
+  async deleteCurrent() {
+    if (!this.isEditMode()) return;
+    const id = this.openedId();
+    if (!id) return;
+  
+    this.deleting.set(true);
+  
+    // закрываем с анимацией (как back)
+    this.closing.set(true);
+    await new Promise((r) => setTimeout(r, 200));
+    this.resetDetailState();
+  
+    try {
+      await this.notesService.remove(id);
+    } finally {
+      this.deleting.set(false);
+    }
   }
+  
+
+  private async close(animate: boolean) {
+    await this.flushSave();
+
+    if (animate) {
+      this.closing.set(true);
+      await new Promise((r) => setTimeout(r, 200));
+    }
+
+    this.resetDetailState();
+  }
+
+  private resetDetailState() {
+    this.closing.set(false);
+    this.detailMode.set('edit');
+    this.openedId.set(null);
+  }
+
+  private async flushSave() {
+    const textTrim = (this.editorForm.controls.text.value ?? '').toString().trim();
+
+    // CREATE: create on close if user typed anything
+    if (this.detailMode() === 'create') {
+      if (textTrim.length === 0) return;
+      await this.notesService.add(textTrim);
+      return;
+    }
+
+    // EDIT: update on close if changed
+    const id = this.openedId();
+    if (!id) return;
+
+    if (textTrim === this.lastSavedTrim()) return;
+
+    try {
+      this.saving.set(true);
+      await this.notesService.update(id, textTrim);
+      this.lastSavedTrim.set(textTrim);
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  private readonly paletteSize = 7;
+
+noteColorClass(note: Note, index: number): string {
+  const seed = note.id ?? String(index);
+  const idx = this.hashToIndex(seed, this.paletteSize);
+  return `note--${idx}`;
+}
+
+private hashToIndex(seed: string, mod: number): number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return h % mod;
+}
+
+
+
 }
