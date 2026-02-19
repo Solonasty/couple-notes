@@ -1,20 +1,24 @@
+/* ui-button.component.scss */
+
 .ui-btn {
-  --ui-btn-fs: 16px; /* базовый размер */
+  /* size (можно переопределять инлайн-стилем) */
+  --ui-btn-h: 36px;
+  --ui-btn-px: 18px;
+  --ui-btn-radius: var(--app-radius-pill);
+  --ui-btn-gap: 10px;
+  --ui-btn-fs: 16px;
 
-  font: var(--mat-sys-label-large);
-
+  /* colors */
   --ui-btn-bg: var(--mat-sys-primary);
   --ui-btn-fg: var(--mat-sys-on-primary);
   --ui-btn-border: transparent;
 
   --ui-btn-hover-bg: color-mix(in oklab, var(--ui-btn-bg) 92%, black);
   --ui-btn-active-bg: color-mix(in oklab, var(--ui-btn-bg) 88%, black);
-  --ui-btn-focus-ring: color-mix(in oklab, var(--mat-sys-primary) 30%, transparent);
+  --ui-btn-focus-ring: color-mix(in oklab, var(--ui-btn-bg) 35%, transparent);
 
-  --ui-btn-h: 36px;
-  --ui-btn-px: 18px;
-  --ui-btn-radius: 999px;
-  --ui-btn-gap: 10px;
+  /* disabled behavior (важно для Register) */
+  --ui-btn-disabled-opacity: 0.6;
 
   height: var(--ui-btn-h);
   padding: 0 var(--ui-btn-px);
@@ -28,45 +32,80 @@
   cursor: pointer;
   user-select: none;
 
-  font: var(--mat-sys-label-large);
-  font-weight: 300;
-  letter-spacing: 0.2px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--ui-btn-gap);
+
+  font: var(--mat-sys-label-large);
+  font-size: var(--ui-btn-fs);
+  font-weight: 300;
+  letter-spacing: 0.2px;
 
   transition:
     transform .08s ease,
     opacity .2s ease,
     background-color .2s ease,
-    border-color .2s ease;
+    border-color .2s ease,
+    box-shadow .2s ease;
 
   &:hover:not(:disabled) { background: var(--ui-btn-hover-bg); }
   &:active:not(:disabled) { transform: scale(.99); background: var(--ui-btn-active-bg); }
 
   &:disabled {
-    // opacity: .7;
     cursor: default;
+    opacity: var(--ui-btn-disabled-opacity);
   }
 
   &:focus-visible {
     outline: 0;
     box-shadow: 0 0 0 3px var(--ui-btn-focus-ring);
   }
-  font-size: 16px;                  /* <-- обязательно ниже, чтобы перебить */
 }
+
+/* ===== Host presets (ставятся на <ui-button class="...">) ===== */
+
+:host(.ui-btn--h56) .ui-btn {
+  --ui-btn-h: 56px;
+  --ui-btn-px: 20px;
+  --ui-btn-gap: 12px;
+  --ui-btn-fs: 16px;
+}
+
+:host(.ui-btn--h48) .ui-btn {
+  --ui-btn-h: 48px;
+}
+
+:host(.ui-btn--no-dim) .ui-btn {
+  --ui-btn-disabled-opacity: 1;
+}
+
+/* если захочешь “не pill”, а унифицированный md */
+:host(.ui-btn--radius-md) .ui-btn {
+  --ui-btn-radius: var(--app-radius-md);
+}
+
+/* Для variant="next": текст слева, иконка справа (когда кнопка full) */
+.ui-btn--next .ui-btn__content {
+  width: 100%;
+  justify-content: space-between;
+}
+
 
 .ui-btn--full { width: 100%; }
 
-/* sizes */
-.ui-btn--sm { --ui-btn-h: 26px; --ui-btn-px: 14px; --ui-btn-gap: 8px;  --ui-btn-fs: 14px; }
+/* content layout: теперь иконки внутри <ui-button> работают “из коробки” */
+.ui-btn__content {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-btn-gap);
+}
+
+/* sizes (можешь не трогать, если задаёшь высоту переменной) */
+.ui-btn--sm { --ui-btn-h: 28px; --ui-btn-px: 14px; --ui-btn-gap: 8px;  --ui-btn-fs: 14px; }
 .ui-btn--md { --ui-btn-h: 36px; --ui-btn-px: 18px; --ui-btn-gap: 10px; --ui-btn-fs: 16px; }
-.ui-btn--lg { --ui-btn-h: 54px; --ui-btn-px: 20px; --ui-btn-gap: 12px; --ui-btn-fs: 18px; }
+.ui-btn--lg { --ui-btn-h: 44px; --ui-btn-px: 20px; --ui-btn-gap: 12px; --ui-btn-fs: 16px; }
 
-
-/* variants (только переменные!) */
+/* variants (только переменные) */
 .ui-btn--primary {
   --ui-btn-bg: var(--mat-sys-primary);
   --ui-btn-fg: var(--mat-sys-on-primary);
@@ -87,11 +126,11 @@
 
 .ui-btn--outline {
   --ui-btn-bg: transparent;
-  --ui-btn-fg: var(--mat-sys-on-surface);
-  --ui-btn-border: color-mix(in oklab, var(--mat-sys-on-surface) 30%, transparent);
+  --ui-btn-fg: var(--app-ink);
+  --ui-btn-border: color-mix(in oklab, var(--app-ink) 26%, transparent);
 
-  --ui-btn-hover-bg: color-mix(in oklab, var(--mat-sys-on-surface) 6%, transparent);
-  --ui-btn-active-bg: color-mix(in oklab, var(--mat-sys-on-surface) 10%, transparent);
+  --ui-btn-hover-bg: color-mix(in oklab, var(--app-ink) 6%, transparent);
+  --ui-btn-active-bg: color-mix(in oklab, var(--app-ink) 10%, transparent);
 }
 
 .ui-btn--ghost {
@@ -106,43 +145,48 @@
 .ui-btn--danger {
   --ui-btn-bg: transparent;
   --ui-btn-fg: var(--mat-sys-error);
-  --ui-btn-border: var(--mat-sys-error);
+  --ui-btn-border: transparent;
+
+  --ui-btn-hover-bg: color-mix(in oklab, var(--mat-sys-error) 10%, transparent);
+  --ui-btn-active-bg: color-mix(in oklab, var(--mat-sys-error) 14%, transparent);
 }
 
+/* “next” — теперь без псевдо-стрелки, стрелку вставляем через <ui-icon> */
 .ui-btn--next {
   --ui-btn-bg: var(--app-next-bg, #E9FF73);
-  --ui-btn-fg: var(--app-color-black);
+  --ui-btn-fg: var(--app-ink);
   --ui-btn-border: transparent;
 
   --ui-btn-hover-bg: color-mix(in oklab, var(--ui-btn-bg) 92%, black);
   --ui-btn-active-bg: color-mix(in oklab, var(--ui-btn-bg) 88%, black);
   --ui-btn-focus-ring: color-mix(in oklab, var(--ui-btn-bg) 35%, transparent);
 
-  justify-content: space-between;
-  padding-left: 18px;
-  padding-right: 10px;
-
   font-weight: 500;
   letter-spacing: 0.12px;
 }
 
-.ui-btn--next::after {
-  content: "";
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  flex: 0 0 auto;
-
-  background:
-    color-mix(in oklab, black 12%, transparent)
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'><path d='M10 6l6 6-6 6'/></svg>")
-    no-repeat center / 18px;
+/* утилита для правой “пилюли” под иконку, если захочешь */
+.ui-btn__end-pill {
+  width: calc(var(--ui-btn-h) - 20px);
+  height: calc(var(--ui-btn-h) - 20px);
+  border-radius: var(--app-radius-pill);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in oklab, black 12%, transparent);
 }
 
-.ui-btn--next.ui-btn--loading::after {
-  opacity: 0.6;
+/* icon-only */
+.ui-btn--icon {
+  width: var(--ui-btn-h);
+  padding: 0;
 }
 
+.ui-btn--icon .ui-btn__content {
+  gap: 0;
+}
+
+/* spinner */
 .ui-btn__spinner {
   width: 16px;
   height: 16px;
@@ -152,26 +196,7 @@
   animation: uiBtnSpin .7s linear infinite;
 }
 
-.ui-btn__content {
-  display: flex;
-}
-
-.ui-btn__content--hidden {
-  opacity: 0;
-}
-
-.ui-btn--icon {
-  width: var(--ui-btn-h);
-  padding: 0;
-  --ui-btn-gap: 0;
-}
-
-.ui-btn--icon .ui-btn__content {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
+.ui-btn__content--hidden { opacity: 0; }
 
 @keyframes uiBtnSpin {
   to { transform: rotate(360deg); }

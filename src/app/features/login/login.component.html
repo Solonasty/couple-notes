@@ -20,22 +20,21 @@
     </div>
 
     @if (error()) {
-      <div class="form-error" role="alert">
-        {{ error() }}
-      </div>
+      <div class="form-error" role="alert">{{ error() }}</div>
     }
 
     <div class="actions">
       <ui-button
+        class="ui-btn--h56 ui-btn--no-dim"
         [full]="true"
         variant="primary"
         type="submit"
-        [disabled]="form.invalid"
-        [loading]="loading()">
+        [disabled]="loading()">
         ВОЙТИ
       </ui-button>
 
       <ui-button
+        class="ui-btn--h56 ui-btn--no-dim"
         [full]="true"
         variant="outline"
         type="button"

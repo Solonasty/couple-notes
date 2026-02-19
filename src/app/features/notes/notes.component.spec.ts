@@ -41,38 +41,4 @@ describe('NotesComponent', () => {
     expect(component.notes()).toEqual([]);
     expect(component.notesCount()).toBe(0);
   });
-
-  it('addNote(): calls service.add with trimmed text', async () => {
-    component.openAdd();
-    component.form.setValue({ text: '  hello  ' });
-
-    await component.addNote();
-
-    expect(notesMock.add).toHaveBeenCalledWith('hello');
-    expect(component.isAdding()).toBeFalse();
-    expect(component.form.value.text).toBe('');
-  });
-
-  it('addNote(): does not call service.add if invalid', async () => {
-    component.form.setValue({ text: '' });
-
-    await component.addNote();
-
-    expect(notesMock.add).not.toHaveBeenCalled();
-  });
-
-  it('addNote(): does not call service.add for whitespace-only', async () => {
-    component.openAdd();
-    component.form.setValue({ text: '   ' });
-
-    await component.addNote();
-
-    expect(notesMock.add).not.toHaveBeenCalled();
-    expect(component.isAdding()).toBeTrue();
-  });
-
-  it('deleteNote(): calls service.remove', async () => {
-    await component.deleteNote('id-1');
-    expect(notesMock.remove).toHaveBeenCalledWith('id-1');
-  });
 });

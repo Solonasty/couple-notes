@@ -22,27 +22,31 @@
         formControlName="password"
         type="password"
         placeholder="Пароль"
-        autocomplete="new-password"
-      ></ui-input>
+        autocomplete="new-password">
+      </ui-input>
     </div>
 
     @if (error()) {
-      <div class="form-error" role="alert">
-        {{ error() }}
-      </div>
+      <div class="form-error" role="alert">{{ error() }}</div>
     }
 
     <div class="actions">
       <ui-button
+        class="ui-btn--h56 ui-btn--no-dim"
         [full]="true"
         variant="next"
         type="submit"
         [disabled]="form.invalid"
         [loading]="loading()">
-        СОЗДАТЬ АККАУНТ
+        <span>СОЗДАТЬ АККАУНТ</span>
+
+        <span class="ui-btn__end-pill" aria-hidden="true">
+          <ui-icon name="arrow_forward" size="md"></ui-icon>
+        </span>
       </ui-button>
 
       <ui-button
+        class="ui-btn--h56 ui-btn--no-dim"
         [full]="true"
         variant="outline"
         type="button"
@@ -50,6 +54,7 @@
         routerLink="/auth/login">
         Уже есть аккаунт? Войти
       </ui-button>
+
     </div>
 
   </form>

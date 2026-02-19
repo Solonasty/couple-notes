@@ -1,16 +1,21 @@
+/* src/styles/_base.scss */
+
 *, *::before, *::after {
     box-sizing: border-box;
 }
 
 html, body {
     height: 100%;
-    background-color: var(--mat-sys-surface);
-    color: var(--mat-sys-on-surface);
+    background-color: var(--app-bg);
+    color: var(--app-ink);
+    font-family: var(--app-font-family);
+    font-size: var(--app-font-size);
 }
 
 body {
     margin: 0;
     font: var(--mat-sys-body-medium);
+    font-size: var(--app-font-size);
 }
 
 h1 {

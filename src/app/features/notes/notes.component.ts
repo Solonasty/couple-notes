@@ -18,7 +18,6 @@ import { NotesService } from '../../core/services/notes.service';
 import { Note } from '../../core/services/pair.types';
 import { PairContextService } from '../../core/services/pair-context.service';
 import { UiButtonComponent, UiIconComponent } from '@/app/ui';
-import { MatIcon } from '@angular/material/icon';
 
 type DetailMode = 'edit' | 'create';
 
@@ -51,7 +50,7 @@ export class NotesComponent {
   readonly isDetailOpen = computed(() => this.detailMode() === 'create' || !!this.openedId());
   readonly isEditMode = computed(() => this.detailMode() === 'edit');
   readonly deleting = signal(false);
-
+  private readonly paletteSize = 7;
 
   readonly openedNote = computed<Note | null>(() => {
     const id = this.openedId();
@@ -124,7 +123,7 @@ export class NotesComponent {
     // if note disappears while open (например удалили) -> закрыть
     effect(() => {
       if (!this.isDetailOpen()) return;
-    
+
       if (
         this.isEditMode() &&
         this.openedId() &&
@@ -135,7 +134,6 @@ export class NotesComponent {
         void this.close(false);
       }
     });
-    
 
     // safety: flush on destroy
     this.destroyRef.onDestroy(() => void this.flushSave());
@@ -174,21 +172,20 @@ export class NotesComponent {
     if (!this.isEditMode()) return;
     const id = this.openedId();
     if (!id) return;
-  
+
     this.deleting.set(true);
-  
-    // закрываем с анимацией (как back)
+
     this.closing.set(true);
     await new Promise((r) => setTimeout(r, 200));
     this.resetDetailState();
-  
+
     try {
       await this.notesService.remove(id);
     } finally {
       this.deleting.set(false);
     }
   }
-  
+
 
   private async close(animate: boolean) {
     await this.flushSave();
@@ -232,22 +229,18 @@ export class NotesComponent {
     }
   }
 
-  private readonly paletteSize = 7;
-
-noteColorClass(note: Note, index: number): string {
-  const seed = note.id ?? String(index);
-  const idx = this.hashToIndex(seed, this.paletteSize);
-  return `note--${idx}`;
-}
-
-private hashToIndex(seed: string, mod: number): number {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) {
-    h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  private hashToIndex(seed: string, mod: number): number {
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) {
+      h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+    }
+    return h % mod;
   }
-  return h % mod;
-}
 
-
+  noteColorClass(note: Note, index: number): string {
+    const seed = note.id ?? String(index);
+    const idx = this.hashToIndex(seed, this.paletteSize);
+    return `note--${idx}`;
+  }
 
 }
