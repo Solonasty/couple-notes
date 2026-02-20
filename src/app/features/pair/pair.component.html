@@ -1,87 +1,138 @@
-<mat-card>
-  <mat-card-content>
-    <h3>Ваша пара:</h3>
+<div class="page">
+  <div class="page-header">
+    <header class="page-header__row">
+      <div class="page-header__title">
+        <h1 class="page-header__h1">Пара</h1>
+      </div>
+    </header>
+  </div>
 
-    @if (myProfile()?.pairId) {
-      <p style="margin: 8px 0;">
-        Вы в паре с: <b>{{ myProfile()?.partnerEmail ?? myProfile()?.partnerUid }}</b>
-      </p>
+  <div class="card">
+    <!-- Статус пары -->
+    <div class="section">
+      <h2 class="section-title">Ваша пара</h2>
 
-      <button mat-raised-button color="warn"
-              [disabled]="saving()"
-              (click)="breakPair()">
-        Разорвать пару
-      </button>
-    } @else {
-      <p style="margin: 8px 0;">Вы пока не в паре</p>
-    }
-
-    @if (error()) { <div class="error">{{ error() }}</div> }
-    @if (ok()) { <div class="ok">{{ ok() }}</div> }
-
-    <hr style="margin: 16px 0;" />
-
-    <h3>Отправленные приглашения:</h3>
-
-    @if (outgoingInvites().length === 0) {
-      <p style="margin: 8px 0;">Нет отправленных приглашений</p>
-    } @else {
-      @for (inv of outgoingInvites(); track inv.id) {
-        <p style="margin: 8px 0;">
-          Кому: <b>{{ inv.toEmail }}</b>
-        </p>
-      }
-    }
-
-    <hr style="margin: 16px 0;" />
-
-    <h3>Полученые приглашения:</h3>
-
-    @if (incomingInvites().length === 0) {
-      <p style="margin: 8px 0;">Нет приглашений</p>
-    } @else {
-      @for (inv of incomingInvites(); track inv.id) {
-        <div style="display:flex; gap:12px; align-items:center; margin:8px 0;">
-          <div style="flex:1;">
-            От: <b>{{ inv.fromEmail }}</b>
+      @if (myProfile()?.pairId) {
+        <div class="pair-block">
+          <div class="pair-meta">
+            <div class="value">{{ myProfile()?.partnerEmail ?? myProfile()?.partnerUid }}</div>
           </div>
 
-          <button mat-raised-button color="primary"
-                  [disabled]="saving()"
-                  (click)="acceptInvite(inv.id)">
-            Принять
-          </button>
+          <ui-button
+            class="ui-btn--h56 ui-btn--no-dim"
+            [full]="true"
+            variant="outline"
+            type="button"
+            [disabled]="saving()"
+            [loading]="saving()"
+            (click)="breakPair()">
+            РАЗОРВАТЬ ПАРУ
+          </ui-button>
+        </div>
+      } @else {
+        <p class="muted">Вы пока не в паре</p>
+      }
+    </div>
 
-          <button mat-button
-                  [disabled]="saving()"
-                  (click)="declineInvite(inv.id)">
-            Отклонить
-          </button>
+    @if (error()) {
+      <div class="form-error" role="alert">{{ error() }}</div>
+    }
+
+    @if (ok()) {
+      <div class="form-ok" role="status">{{ ok() }}</div>
+    }
+
+    <!-- Отправленные приглашения -->
+    <div class="section">
+      <h2 class="section-title">Отправленные приглашения</h2>
+
+      @if (outgoingInvites().length === 0) {
+        <p class="muted">Нет отправленных приглашений</p>
+      } @else {
+        <div class="list-grid">
+          @for (inv of outgoingInvites(); track inv.id) {
+            <div class="row-card">
+              <div class="label">Кому</div>
+              <div class="value">{{ inv.toEmail }}</div>
+            </div>
+          }
         </div>
       }
-    }
+    </div>
 
-    <hr style="margin: 16px 0;" />
+    <!-- Полученные приглашения -->
+    <div class="section">
+      <h2 class="section-title">Полученные приглашения</h2>
 
-    @if (canShowInviteForm()) {
-      <h4>Пригласить партнёра</h4>
-      <form [formGroup]="pairForm" (ngSubmit)="createInvite()">
-        <mat-form-field appearance="outline" class="full">
-          <mat-label>Email партнёра</mat-label>
-          <input matInput formControlName="partnerEmail" autocomplete="email" />
-        </mat-form-field>
+      @if (incomingInvites().length === 0) {
+        <p class="muted">Нет приглашений</p>
+      } @else {
+        <div class="list-grid">
+          @for (inv of incomingInvites(); track inv.id) {
+            <div class="row-card row-card--interactive">
+              <div class="row-card__content">
+                <div class="label">От</div>
+                <div class="value">{{ inv.fromEmail }}</div>
+              </div>
 
-        <button mat-raised-button color="primary"
-                type="submit"
-                [disabled]="pairForm.invalid || saving()">
-          Отправить приглашение
-        </button>
-      </form>
-    } @else {
-      <p style="margin: 8px 0;">
-        Форма приглашения скрыта, потому что у вас есть активная пара или активное приглашение.
-        (Если приглашение отклонено — форма появится автоматически.)
-      </p>
-    }
-  </mat-card-content>
-</mat-card>
+              <!-- ВАЖНО: grid, как в dashboard -->
+              <div class="actions-grid">
+                <ui-button
+                  class="ui-btn--h48 ui-btn--no-dim"
+                  [full]="true"
+                  variant="primary"
+                  type="button"
+                  [disabled]="saving()"
+                  [loading]="saving()"
+                  (click)="acceptInvite(inv.id)">
+                  ПРИНЯТЬ
+                </ui-button>
+
+                <ui-button
+                  class="ui-btn--h48 ui-btn--no-dim"
+                  [full]="true"
+                  variant="danger"
+                  type="button"
+                  [disabled]="saving()"
+                  (click)="declineInvite(inv.id)">
+                  ОТКЛОНИТЬ
+                </ui-button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Форма приглашения -->
+    <div class="section">
+      @if (canShowInviteForm()) {
+        <form class="form-block" [formGroup]="pairForm" (ngSubmit)="createInvite()">
+          <h2 class="section-title">Пригласить партнёра</h2>
+
+          <ui-input
+            formControlName="partnerEmail"
+            type="email"
+            placeholder="Email партнёра"
+            autocomplete="email">
+          </ui-input>
+
+          <ui-button
+            class="ui-btn--h56 ui-btn--no-dim"
+            [full]="true"
+            variant="primary"
+            type="submit"
+            [disabled]="pairForm.invalid || saving()"
+            [loading]="saving()">
+            ОТПРАВИТЬ ПРИГЛАШЕНИЕ
+          </ui-button>
+        </form>
+      } @else {
+        <div class="hint">
+          Форма приглашения скрыта, потому что у вас есть активная пара или активное приглашение.
+          Если приглашение отклонено — форма появится автоматически.
+        </div>
+      }
+    </div>
+  </div>
+</div>

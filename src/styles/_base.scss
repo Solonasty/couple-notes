@@ -88,3 +88,82 @@ small {
     line-height: 1.3;
     color: var(--mat-sys-on-surface-variant);
   }
+
+  /* src/app/ui/styles/_page-sections.scss */
+
+.page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.card {
+  display: grid;
+  gap: 12px;
+}
+
+.section {
+  border-radius: 16px;
+  border: 1px solid color-mix(in oklab, var(--mat-sys-outline) 35%, transparent);
+  padding: 14px;
+}
+
+.section-title {
+  margin: 0 0 10px;
+  letter-spacing: var(--mat-sys-title-medium-tracking);
+  font: var(--mat-sys-title-medium);
+}
+
+.label {
+  margin-bottom: 4px;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-medium);
+  letter-spacing: var(--mat-sys-label-medium-tracking);
+}
+
+.value {
+  font: var(--mat-sys-body-large);
+  letter-spacing: var(--mat-sys-body-large-tracking);
+  word-break: break-word;
+}
+
+.muted {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+  letter-spacing: var(--mat-sys-body-medium-tracking);
+}
+
+.form-block {
+  display: grid;
+  gap: 12px;
+}
+
+.hint {
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--mat-sys-on-surface-variant);
+  background: color-mix(in oklab, var(--mat-sys-surface) 94%, var(--mat-sys-outline) 6%);
+  font: var(--mat-sys-body-small);
+  letter-spacing: var(--mat-sys-body-small-tracking);
+}
+
+.form-error {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in oklab, var(--mat-sys-error) 45%, transparent);
+  background: color-mix(in oklab, var(--mat-sys-error) 10%, transparent);
+  color: var(--mat-sys-error);
+  font: var(--mat-sys-body-small);
+  letter-spacing: var(--mat-sys-body-small-tracking);
+}
+
+.form-ok {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in oklab, var(--mat-sys-primary) 40%, transparent);
+  background: color-mix(in oklab, var(--mat-sys-primary) 10%, transparent);
+  color: var(--mat-sys-primary);
+  font: var(--mat-sys-body-small);
+  letter-spacing: var(--mat-sys-body-small-tracking);
+}

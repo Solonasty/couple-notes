@@ -1,84 +1,122 @@
-<h2>Сводка недели</h2>
+<div class="page">
+  <div class="page-header">
+    <header class="page-header__row">
+      <div class="page-header__title">
+        <h1 class="page-header__h1">Сводка недели</h1>
+      </div>
+    </header>
+  </div>
 
-<p class="status">{{ statusText() }}</p>
+  <div class="card">
+    <!-- Статус и период -->
+    <div class="section">
+      <h2 class="section-title">Статус отчёта</h2>
 
-@if (periodText()) {
-  <p class="period">
-    <b>Период отчёта:</b> {{ periodText() }}
-  </p>
-}
+      <p class="status">{{ statusText() }}</p>
 
-<p class="vpn-hint">
-  Важно: для генерации отчёта включите VPN (запрос к LLM работает только через VPN).
-</p>
-
-<div style="display:flex; gap:12px; align-items:center;">
-  <button
-    mat-raised-button
-    color="primary"
-    (click)="generate()"
-    [disabled]="loading() || !canGenerate()"
-  >
-    Сформировать отчёт
-  </button>
-
-  <button
-    mat-stroked-button
-    (click)="getReport()"
-    [disabled]="!canGet()"
-  >
-    Получить отчёт
-  </button>
-</div>
-
-@if (loading()) {
-  <p>Генерация...</p>
-}
-
-@if (uiError()) {
-  <p class="error">{{ uiError() }}</p>
-}
-
-@if (report()?.status === 'error') {
-  <p class="error">{{ report()?.error }}</p>
-}
-
-@if (summary()) {
-  <mat-card style="margin-top:12px;">
-    <mat-card-content>
-      <pre>{{ summary() }}</pre>
-    </mat-card-content>
-  </mat-card>
-}
-
-@if (report()?.status === 'ready') {
-  <mat-card style="margin-top:12px;">
-    <mat-card-content>
-      <div><b>Сформировал:</b> {{ report()?.createdBy }}</div>
-      <div><b>Заметок в отчёте:</b> {{ report()?.notesCount }}</div>
-    </mat-card-content>
-  </mat-card>
-
-  <mat-card style="margin-top:12px;">
-    <mat-card-content>
-      <h3 style="margin:0 0 8px 0;">Заметки, использованные для отчёта (debug)</h3>
-
-      @if (!hasSourceNotes()) {
-        <p>Список пуст.</p>
-      } @else {
-        <div style="display:flex; flex-direction:column; gap:10px;">
-          @for (n of sourceNotes(); track n.id) {
-            <div style="border:1px solid #ddd; border-radius:8px; padding:8px;">
-              <div style="font-size:12px; opacity:.8;">
-                <b>ownerUid:</b> {{ n.ownerUid }} · <b>noteId:</b> {{ n.id }}
-              </div>
-              <div style="white-space:pre-wrap; margin-top:6px;">
-                {{ n.text }}
-              </div>
-            </div>
-          }
+      @if (periodText()) {
+        <div class="meta-line">
+          <span class="label-inline">Период отчёта:</span>
+          <span>{{ periodText() }}</span>
         </div>
       }
-    </mat-card-content>
-  </mat-card>
-}
+
+      <div class="hint vpn-hint">
+        Важно: для генерации отчёта включите VPN (запрос к LLM работает только через VPN).
+      </div>
+    </div>
+
+    <!-- Действия -->
+    <div class="section">
+      <h2 class="section-title">Действия</h2>
+
+      <div class="actions-grid">
+        <ui-button
+          class="ui-btn--h56 ui-btn--no-dim"
+          [full]="true"
+          variant="primary"
+          type="button"
+          [disabled]="loading() || !canGenerate()"
+          [loading]="loading()"
+          (click)="generate()">
+          СФОРМИРОВАТЬ ОТЧЁТ
+        </ui-button>
+
+        <ui-button
+          class="ui-btn--h56 ui-btn--no-dim"
+          [full]="true"
+          variant="outline"
+          type="button"
+          [disabled]="loading() || !canGet()"
+          (click)="getReport()">
+          ПОЛУЧИТЬ ОТЧЁТ
+        </ui-button>
+      </div>
+
+      @if (loading()) {
+        <div class="hint">Генерация отчёта…</div>
+      }
+    </div>
+
+    <!-- Ошибки -->
+    @if (uiError()) {
+      <div class="form-error" role="alert">{{ uiError() }}</div>
+    }
+
+    @if (report()?.status === 'error') {
+      <div class="form-error" role="alert">{{ report()?.error }}</div>
+    }
+
+    <!-- Текст отчёта -->
+    @if (summary()) {
+      <div class="section">
+        <h2 class="section-title">Текст отчёта</h2>
+        <pre class="report-pre">{{ summary() }}</pre>
+      </div>
+    }
+
+    <!-- Метаданные отчёта -->
+    @if (report()?.status === 'ready') {
+      <div class="section">
+        <h2 class="section-title">Информация</h2>
+
+        <div class="meta-grid">
+          <div class="meta-item">
+            <div class="label">Сформировал</div>
+            <div class="value">{{ report()?.createdBy }}</div>
+          </div>
+
+          <div class="meta-item">
+            <div class="label">Заметок в отчёте</div>
+            <div class="value">{{ report()?.notesCount }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2 class="section-title">Заметки для отчёта</h2>
+        <p class="muted debug-caption">Debug: заметки, использованные для генерации</p>
+
+        @if (!hasSourceNotes()) {
+          <p class="muted">Список пуст.</p>
+        } @else {
+          <div class="notes-list">
+            @for (n of sourceNotes(); track n.id) {
+              <div class="note-card">
+                <div class="note-meta">
+                  <span><b>ownerUid:</b> {{ n.ownerUid }}</span>
+                  <span>·</span>
+                  <span><b>noteId:</b> {{ n.id }}</span>
+                </div>
+
+                <div class="note-text">
+                  {{ n.text }}
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

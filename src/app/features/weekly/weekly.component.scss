@@ -1,0 +1,94 @@
+
+.status {
+    margin: 0;
+    font: var(--mat-sys-body-medium);
+    letter-spacing: var(--mat-sys-body-medium-tracking);
+  }
+  
+  .meta-line {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: baseline;
+    font: var(--mat-sys-body-medium);
+    letter-spacing: var(--mat-sys-body-medium-tracking);
+  }
+  
+  .label-inline {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-medium);
+    letter-spacing: var(--mat-sys-label-medium-tracking);
+  }
+  
+  .vpn-hint {
+    margin-top: 10px;
+  }
+  
+  .actions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  
+  .report-pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font: var(--mat-sys-body-medium);
+    letter-spacing: var(--mat-sys-body-medium-tracking);
+    line-height: 1.45;
+  }
+  
+  .meta-grid {
+    display: grid;
+    gap: 10px;
+  }
+  
+  .meta-item {
+    border-radius: 12px;
+    border: 1px solid color-mix(in oklab, var(--mat-sys-outline) 25%, transparent);
+    padding: 10px 12px;
+    background: color-mix(in oklab, var(--mat-sys-surface) 92%, var(--mat-sys-primary) 2%);
+  }
+  
+  .debug-caption {
+    margin-top: -4px;
+    margin-bottom: 10px;
+  }
+  
+  .notes-list {
+    display: grid;
+    gap: 10px;
+  }
+  
+  .note-card {
+    display: grid;
+    gap: 8px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in oklab, var(--mat-sys-outline) 25%, transparent);
+    padding: 10px 12px;
+    background: color-mix(in oklab, var(--mat-sys-surface) 96%, var(--mat-sys-primary) 2%);
+  }
+  
+  .note-meta {
+    font: var(--mat-sys-body-small);
+    letter-spacing: var(--mat-sys-body-small-tracking);
+    color: var(--mat-sys-on-surface-variant);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  
+  .note-text {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font: var(--mat-sys-body-medium);
+    letter-spacing: var(--mat-sys-body-medium-tracking);
+  }
+  
+  @media (max-width: 640px) {
+    .actions-grid {
+      grid-template-columns: 1fr;
+    }
+  }

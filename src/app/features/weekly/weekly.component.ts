@@ -1,7 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 
 import {
   ReportsService,
@@ -9,6 +7,8 @@ import {
   Schedule,
   ReportSourceNote,
 } from '../../core/services/reports.service';
+
+import { UiButtonComponent } from '@/app/ui';
 
 const SCHEDULE_INIT: Schedule = {
   inPair: false,
@@ -25,8 +25,9 @@ const SCHEDULE_INIT: Schedule = {
 @Component({
   standalone: true,
   selector: 'app-weekly',
-  imports: [MatButtonModule, MatCardModule],
+  imports: [UiButtonComponent],
   templateUrl: './weekly.component.html',
+  styleUrl: './weekly.component.scss',
 })
 export class WeeklyComponent {
   private reports = inject(ReportsService);
@@ -42,7 +43,6 @@ export class WeeklyComponent {
 
   sourceNotes = computed<ReportSourceNote[]>(() => this.report()?.sourceNotes ?? []);
   hasSourceNotes = computed(() => this.sourceNotes().length > 0);
-
 
   periodText = computed(() => {
     const s = this.sched();

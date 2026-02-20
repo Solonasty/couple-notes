@@ -1,0 +1,48 @@
+
+
+
+
+.pair-block {
+    display: grid;
+    gap: 12px;
+  }
+  
+  .pair-meta {
+    display: grid;
+    gap: 2px;
+  }
+  
+  .list-grid {
+    display: grid;
+    gap: 10px;
+  }
+  
+  .row-card {
+    display: grid;
+    gap: 8px;
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: color-mix(in oklab, var(--mat-sys-primary) 14%, var(--mat-sys-outline) 6%);
+  }
+  
+  .row-card--interactive {
+    gap: 10px;
+  }
+  
+  .row-card__content {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+  
+  .actions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  
+  @media (max-width: 640px) {
+    .actions-grid {
+      grid-template-columns: 1fr;
+    }
+  }

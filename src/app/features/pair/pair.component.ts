@@ -1,11 +1,7 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Firestore, collection, collectionData, query, where } from '@angular/fire/firestore';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, of, switchMap, startWith } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -15,6 +11,8 @@ import { PairInvite, UserProfile } from '../../core/services/pair.types';
 import { doc, docData } from '@angular/fire/firestore';
 import { map } from 'rxjs/operators';
 
+import { UiButtonComponent, UiInputComponent } from '@/app/ui';
+
 type PairInviteDoc = PairInvite & { id: string };
 
 @Component({
@@ -22,14 +20,12 @@ type PairInviteDoc = PairInvite & { id: string };
   selector: 'app-pair',
   imports: [
     ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
+    UiButtonComponent,
+    UiInputComponent,
   ],
   templateUrl: './pair.component.html',
+  styleUrl: './pair.component.scss',
 })
-
 export class PairComponent {
   private fb = inject(FormBuilder);
   private fs = inject(Firestore);
@@ -56,25 +52,16 @@ export class PairComponent {
       switchMap((uid) => {
         if (!uid) return of(null);
         const ref = doc(this.fs, `users/${uid}`);
-        return (docData(ref) as Observable<UserProfile>).pipe(
-          map((p) => p ?? null)
-        );
+        return (docData(ref) as Observable<UserProfile>).pipe(map((p) => p ?? null));
       })
     ),
     { initialValue: null }
   );
 
   readonly canShowInviteForm = computed(() => {
-    // если уже в паре — форму не показываем
     if (this.myProfile()?.pairId) return false;
-
-    // если есть исходящее pending — форму не показываем
     if (this.outgoingInvites().length > 0) return false;
-
-    // если есть входящее pending — форму не показываем
     if (this.incomingInvites().length > 0) return false;
-
-    // declined сюда не попадает (ты смотришь только pending) → значит форму показываем ✅
     return true;
   });
 
@@ -110,7 +97,6 @@ export class PairComponent {
         return;
       }
 
-      // чтобы не дергать getDoc каждый пересчет
       if (this.checkedPairId === pairId) return;
       this.checkedPairId = pairId;
 
@@ -118,12 +104,17 @@ export class PairComponent {
         this.error.set(e instanceof Error ? e.message : 'Ошибка синхронизации пары');
       });
     });
+
+    // Как в dashboard — очищаем сообщения при изменении формы
+    this.pairForm.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        this.error.set(null);
+        this.ok.set(null);
+      });
   }
 
-  private invitesSignal(
-    field: 'toUid' | 'fromUid',
-    status: PairInvite['status']
-  ) {
+  private invitesSignal(field: 'toUid' | 'fromUid', status: PairInvite['status']) {
     const s = toSignal<PairInviteDoc[]>(
       (toObservable(this.uid) as Observable<string | null>).pipe(
         switchMap((uid) => {
