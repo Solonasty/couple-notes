@@ -35,16 +35,15 @@ export class ShellComponent {
   private router = inject(Router);
 
   readonly isMobile = signal(false);
-  readonly user = this.auth.user; // signal<User|null>
+  readonly user = this.auth.user;
+  readonly profile = this.auth.profile;
 
   constructor() {
     this.bo.observe([Breakpoints.XSmall]).subscribe(r => this.isMobile.set(r.matches));
   }
 
   accountName(): string {
-    const email = this.user()?.email;
-    if (!email) return 'Couple Notes';
-    return email.split('@')[0];
+    return this.auth.profile()?.name?.trim() || 'Couple Notes';
   }
 
   initials(): string {

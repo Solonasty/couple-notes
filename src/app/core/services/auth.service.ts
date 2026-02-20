@@ -7,19 +7,42 @@ import {
   User,
 } from 'firebase/auth';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { filter, firstValueFrom, shareReplay, take } from 'rxjs';
+import { filter, firstValueFrom, of, shareReplay, switchMap, take } from 'rxjs';
+import { Firestore, doc, docData, DocumentReference } from '@angular/fire/firestore';
+
+export interface AppUserProfile {
+  name: string;
+  email: string;
+  pairId: string | null;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private auth = inject(Auth);
+  private fs = inject(Firestore);
 
   readonly user$ = authState(this.auth).pipe(
     shareReplay({ bufferSize: 1, refCount: true })
   );
 
   readonly user = toSignal(this.user$, { initialValue: null as User | null });
-
   readonly uid = computed(() => this.user()?.uid ?? null);
+
+  readonly profile$ = this.user$.pipe(
+    switchMap((u) => {
+      if (!u) return of(null);
+
+      const ref = doc(this.fs, `users/${u.uid}`) as DocumentReference<AppUserProfile>;
+      return docData(ref);
+    }),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
+
+  readonly profile = toSignal(this.profile$, {
+    initialValue: null as AppUserProfile | null,
+  });
 
   async signUp(email: string, password: string) {
     try {
