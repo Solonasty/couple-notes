@@ -237,10 +237,8 @@ export class NotesComponent {
     return h % mod;
   }
 
-  noteColorClass(note: Note, index: number): string {
-    const seed = note.id ?? String(index);
-    const idx = this.hashToIndex(seed, this.paletteSize);
-    return `note--${idx}`;
+  noteColorClass(_: Note, index: number): string {
+    return `note--${index % this.paletteSize}`;
   }
 
 }

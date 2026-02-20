@@ -1,0 +1,68 @@
+.page {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .title {
+    margin: 0 0 14px;
+  }
+  
+  .card {
+    display: grid;
+    gap: 12px;
+  }
+  
+  .section {
+    border-radius: 16px;
+    border: 1px solid color-mix(in oklab, var(--mat-sys-outline) 35%, transparent);
+    padding: 14px;
+  }
+  
+  .label {
+    margin-bottom: 6px;
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-medium);
+    letter-spacing: var(--mat-sys-label-medium-tracking);
+  }
+  
+  .email {
+    font: var(--mat-sys-body-large);
+    letter-spacing: var(--mat-sys-body-large-tracking);
+    word-break: break-word;
+  }
+  
+  .section-title {
+    margin: 0 0 10px;
+    letter-spacing: var(--mat-sys-title-medium-tracking);
+  }
+  
+  .form-block {
+    display: grid;
+    gap: 12px;
+  }
+  
+  .fields {
+    display: grid;
+    gap: 12px;
+  }
+  
+  .form-error {
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in oklab, var(--mat-sys-error) 45%, transparent);
+    background: color-mix(in oklab, var(--mat-sys-error) 10%, transparent);
+    color: var(--mat-sys-error);
+    font: var(--mat-sys-body-small);
+    letter-spacing: var(--mat-sys-body-small-tracking);
+  }
+  
+  .form-ok {
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in oklab, var(--mat-sys-primary) 40%, transparent);
+    background: color-mix(in oklab, var(--mat-sys-primary) 10%, transparent);
+    color: var(--mat-sys-primary);
+    font: var(--mat-sys-body-small);
+    letter-spacing: var(--mat-sys-body-small-tracking);
+  }

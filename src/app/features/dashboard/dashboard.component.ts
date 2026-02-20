@@ -1,50 +1,28 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { AuthService } from '../../core/services/auth.service';
-
-import {
-  Firestore,
-  doc,
-  docData,
-  setDoc,
-  serverTimestamp,
-} from '@angular/fire/firestore';
-
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { of, switchMap, type Observable } from 'rxjs';
-import type { DocumentReference } from 'firebase/firestore';
-
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
+import { Firestore, doc, setDoc, serverTimestamp } from '@angular/fire/firestore';
 
 import {
   EmailAuthProvider,
   reauthenticateWithCredential,
-  updateEmail,
   updatePassword,
 } from 'firebase/auth';
 
-type UserProfile = {
-  email?: string;
-  name?: string;
-  pairId?: string | null;
-  partnerUid?: string | null;
-  partnerEmail?: string | null;
-};
+import { UiButtonComponent, UiIconComponent, UiInputComponent } from '@/app/ui';
 
 @Component({
   standalone: true,
   selector: 'app-dashboard',
   imports: [
     ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
+    UiButtonComponent,
+    UiInputComponent,
   ],
   templateUrl: './dashboard.component.html',
+  styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent {
   private fb = inject(FormBuilder);
@@ -52,32 +30,28 @@ export class DashboardComponent {
   private fs = inject(Firestore);
 
   readonly user = this.auth.user;
-  readonly uid = computed(() => this.user()?.uid ?? null);
+  readonly uid = this.auth.uid;
+  readonly profile = this.auth.profile;
 
-  // корректная реактивность: uid (signal) -> observable -> docData -> signal
-  readonly profile = toSignal<UserProfile | null>(
-    toObservable(this.uid).pipe(
-      switchMap((uid) => {
-        if (!uid) return of(null);
-
-        const ref = doc(this.fs, `users/${uid}`) as unknown as DocumentReference<UserProfile>;
-        return docData(ref) as unknown as Observable<UserProfile>;
-      })
-    ),
-    { initialValue: null }
-  );
-
-  readonly saving = signal(false);
+  readonly savingName = signal(false);
+  readonly savingPassword = signal(false);
   readonly error = signal<string | null>(null);
   readonly ok = signal<string | null>(null);
 
-  profileForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(40)]],
+  readonly accountEmail = computed(() => {
+    return this.user()?.email ?? this.profile()?.email ?? '—';
   });
 
-  emailForm = this.fb.nonNullable.group({
-    newEmail: ['', [Validators.required, Validators.email]],
-    currentPassword: ['', [Validators.required, Validators.minLength(6)]],
+  readonly greetingTitle = computed(() => {
+    const name = this.profile()?.name?.trim();
+  
+    if (!name) return 'Привет 👋';
+    const firstName = name.split(/\s+/)[0];
+    return `Привет, ${firstName}`;
+  });
+
+  nameForm = this.fb.nonNullable.group({
+    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(40)]],
   });
 
   passwordForm = this.fb.nonNullable.group({
@@ -87,83 +61,56 @@ export class DashboardComponent {
 
   constructor() {
     effect(() => {
-      const p = this.profile();
-      if (p?.name) {
-        this.profileForm.patchValue({ name: p.name }, { emitEvent: false });
+      const name = this.profile()?.name?.trim() ?? '';
+      if (!name) return;
+
+      if (this.nameForm.controls.name.value !== name) {
+        this.nameForm.patchValue({ name }, { emitEvent: false });
       }
     });
+
+    this.nameForm.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        this.error.set(null);
+        this.ok.set(null);
+      });
+
+    this.passwordForm.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        this.error.set(null);
+        this.ok.set(null);
+      });
   }
 
   private async reauth(currentPassword: string) {
     const u = this.user();
-    if (!u?.email) throw new Error('Нет email у пользователя');
+    if (!u?.email) throw new Error('Не удалось определить email пользователя');
+
     const cred = EmailAuthProvider.credential(u.email, currentPassword);
     await reauthenticateWithCredential(u, cred);
   }
 
   async saveName() {
-    this.error.set(null);
-    this.ok.set(null);
-    if (this.profileForm.invalid) return;
+    if (this.nameForm.invalid) return;
 
     const uid = this.uid();
     if (!uid) return;
 
-    this.saving.set(true);
-    try {
-      const name = this.profileForm.getRawValue().name.trim();
-      const email = (this.user()?.email ?? '').toLowerCase();
-
-      await setDoc(
-        doc(this.fs, `users/${uid}`),
-        {
-          name,
-          email,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
-
-      await setDoc(
-        doc(this.fs, `publicUsers/${uid}`),
-        {
-          name,
-          email,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
-
-      this.ok.set('Имя сохранено');
-    } catch (e: unknown) {
-      this.error.set(e instanceof Error ? e.message : 'Ошибка сохранения');
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  async changeEmail() {
+    this.savingName.set(true);
     this.error.set(null);
     this.ok.set(null);
-    if (this.emailForm.invalid) return;
 
-    const u = this.user();
-    if (!u) return;
-
-    this.saving.set(true);
     try {
-      const { newEmail, currentPassword } = this.emailForm.getRawValue();
-      const cleanEmail = newEmail.trim().toLowerCase();
-
-      await this.reauth(currentPassword);
-      await updateEmail(u, cleanEmail);
-
-      const uid = u.uid;
+      const name = this.nameForm.getRawValue().name.trim();
+      const email = (this.user()?.email ?? this.profile()?.email ?? '').trim().toLowerCase();
 
       await setDoc(
         doc(this.fs, `users/${uid}`),
         {
-          email: cleanEmail,
+          name,
+          email,
           updatedAt: serverTimestamp(),
         },
         { merge: true }
@@ -172,41 +119,74 @@ export class DashboardComponent {
       await setDoc(
         doc(this.fs, `publicUsers/${uid}`),
         {
-          email: cleanEmail,
+          name,
+          email,
           updatedAt: serverTimestamp(),
         },
         { merge: true }
       );
 
-      this.ok.set('Email обновлён');
-      this.emailForm.reset({ newEmail: '', currentPassword: '' });
+      this.ok.set('Имя обновлено');
     } catch (e: unknown) {
-      this.error.set(e instanceof Error ? e.message : 'Ошибка смены email');
+      this.error.set(e instanceof Error ? mapProfileError(e) : 'Ошибка сохранения имени');
     } finally {
-      this.saving.set(false);
+      this.savingName.set(false);
     }
   }
 
   async changePassword() {
-    this.error.set(null);
-    this.ok.set(null);
     if (this.passwordForm.invalid) return;
 
     const u = this.user();
     if (!u) return;
 
-    this.saving.set(true);
+    this.savingPassword.set(true);
+    this.error.set(null);
+    this.ok.set(null);
+
     try {
       const { currentPassword, newPassword } = this.passwordForm.getRawValue();
+
       await this.reauth(currentPassword);
       await updatePassword(u, newPassword);
 
+      this.passwordForm.reset({
+        currentPassword: '',
+        newPassword: '',
+      });
+
       this.ok.set('Пароль обновлён');
-      this.passwordForm.reset({ currentPassword: '', newPassword: '' });
     } catch (e: unknown) {
-      this.error.set(e instanceof Error ? e.message : 'Ошибка смены пароля');
+      this.error.set(e instanceof Error ? mapProfileError(e) : 'Ошибка смены пароля');
     } finally {
-      this.saving.set(false);
+      this.savingPassword.set(false);
     }
+  }
+}
+
+type FirebaseAuthErrorLike = { code?: string; message?: string };
+
+function mapProfileError(e: unknown): string {
+  const code = (e as FirebaseAuthErrorLike)?.code;
+
+  switch (code) {
+    case 'auth/invalid-credential':
+    case 'auth/wrong-password':
+      return 'Неверный текущий пароль';
+
+    case 'auth/weak-password':
+      return 'Новый пароль слишком простой (минимум 6 символов)';
+
+    case 'auth/requires-recent-login':
+      return 'Для этого действия нужно войти заново';
+
+    case 'auth/too-many-requests':
+      return 'Слишком много попыток. Попробуйте позже';
+
+    case 'auth/network-request-failed':
+      return 'Проблема с сетью. Проверьте интернет';
+
+    default:
+      return (e as Error)?.message || 'Что-то пошло не так';
   }
 }

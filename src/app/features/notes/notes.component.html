@@ -1,24 +1,26 @@
 <section class="notes">
   <!-- LIST -->
   <div class="list" [class.dimmed]="isDetailOpen()">
-    <header class="header">
-      <div class="title">
-        <h1 class="h1">Заметки</h1>
-        <span class="count">( {{ notesCount() }} )</span>
-      </div>
-
-      @if (!inPair()) {
-        <div class="hint">Вступите в пару, чтобы добавлять и видеть заметки</div>
-      } @else {
-        <ui-button
-          (click)="openNew()"
-          variant="outline"
-          type="button"
-          [loading]="loading()">
-          Добавить
-        </ui-button>
-      }
-    </header>
+    <div class="page-header">
+      <header class="page-header__row">
+        <div class="page-header__title">
+          <h1 class="page-header__h1">Заметки</h1>
+          <span class="page-header__count">( {{ notesCount() }} )</span>
+        </div>
+    
+        <div class="page-header__actions">
+          @if (inPair()) {
+            <ui-button
+              (click)="openNew()"
+              variant="outline"
+              type="button"
+              [loading]="loading()">
+              Добавить
+            </ui-button>
+          }
+        </div>
+      </header>
+    </div>
 
     @if (!inPair()) {
       <p class="empty">Вы сможете добавлять и видеть заметки, когда вступите в пару.</p>

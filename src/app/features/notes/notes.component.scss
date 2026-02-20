@@ -15,22 +15,22 @@
   --red: #ff3b30;
   --accent: #FEC942;
 
-  --note-0: #FEC942;
-  --note-1: #ffa6f8;
-  --note-2: #A7C8FF;
+  --note-0: #e1b6ff;
+  --note-1: #D6F25E;
+  --note-2: #E6E8EE;
   --note-3: #D6F25E;
   --note-4: #e1b6ff;
-  --note-5: #D6F25E;
-  --note-6: #E6E8EE;
+  --note-5: #ffa6f8;
+  --note-6: #A7C8FF;
 }
 
 .note.note--0 { background: color-mix(in srgb, var(--note-0) 52%, white); }
-.note.note--1 { background: color-mix(in srgb, var(--note-1) 50%, white); }
-.note.note--2 { background: color-mix(in srgb, var(--note-2) 46%, white); }
+.note.note--1 { background: color-mix(in srgb, var(--note-1) 44%, white); }
+.note.note--2 { background: color-mix(in srgb, var(--note-2) 92%, white); }
 .note.note--3 { background: color-mix(in srgb, var(--note-3) 44%, white); }
-.note.note--4 { background: color-mix(in srgb, var(--note-4) 48%, white); }
-.note.note--5 { background: color-mix(in srgb, var(--note-5) 42%, white); }
-.note.note--6 { background: color-mix(in srgb, var(--note-6) 92%, white); }
+.note.note--4 { background: color-mix(in srgb, var(--note-4) 38%, white); }
+.note.note--5 { background: color-mix(in srgb, var(--note-5) 22%, white); }
+.note.note--6 { background: color-mix(in srgb, var(--note-6) 42%, white); }
 
 
 .note {
@@ -134,7 +134,7 @@
   top: 0;
   z-index: 3;
 
-  padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
+  padding: calc(8px + env(safe-area-inset-top)) 0 8px;
   background: var(--mat-toolbar-container-background-color, var(--mat-sys-surface));
 
   display: flex;
@@ -144,21 +144,22 @@
 
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  padding-right: 10px;
 }
 
 .detail-meta-row {
-  padding: 8px 14px 0;
+  padding: 0 24px 0;
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
 .detail-meta {
-  padding: 10px 14px 0;
+  padding: 0 24px 0;
 }
 
 .detail-body {
-  padding: 10px 14px 18px;
+  padding: 10px 24px 18px;
 }
 
 .detail-textarea {
