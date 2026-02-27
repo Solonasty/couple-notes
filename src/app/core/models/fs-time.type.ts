@@ -1,3 +1,7 @@
-import { FieldValue, Timestamp } from "firebase/firestore";
+import { FieldValue, Timestamp } from 'firebase/firestore';
 
-export type FsTime = Timestamp | FieldValue | null | undefined;
+/** READ: что приходит из Firestore */
+export type FsTime = Timestamp | null | undefined;
+
+/** WRITE: что отправляем в Firestore */
+export type FsWriteTime = FieldValue;

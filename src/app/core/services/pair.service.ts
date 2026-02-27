@@ -11,10 +11,8 @@ import {
   setDoc,
   where,
 } from '@angular/fire/firestore';
-import { combineLatest, map, shareReplay } from 'rxjs';
 import type {
   DocumentReference,
-  FieldValue,
   WithFieldValue,
 } from 'firebase/firestore';
 
@@ -24,22 +22,20 @@ import { User } from '../models/user.type';
 import { PairInvite } from '../models/pair-invite.type';
 import { Pair } from '../models/pair.type';
 
-
 @Injectable({ providedIn: 'root' })
 export class PairService {
   private fs = inject(Firestore);
   private auth = inject(AuthService);
   private pairCtx = inject(PairContextService);
 
-  // (оставил как у тебя; если не используешь — можно удалить)
-  private ctx$ = combineLatest([this.auth.user$, this.pairCtx.activePair$]).pipe(
-    map(([user, activePair]) => {
-      if (!user) return { mode: 'none' as const };
-      if (activePair) return { mode: 'pair' as const, uid: user.uid, pairId: activePair.id };
-      return { mode: 'solo' as const, uid: user.uid };
-    }),
-    shareReplay({ bufferSize: 1, refCount: true })
-  );
+  // private ctx$ = combineLatest([this.auth.user$, this.pairCtx.activePair$]).pipe(
+  //   map(([user, activePair]) => {
+  //     if (!user) return { mode: 'none' as const };
+  //     if (activePair) return { mode: 'pair' as const, uid: user.uid, pairId: activePair.id };
+  //     return { mode: 'solo' as const, uid: user.uid };
+  //   }),
+  //   shareReplay({ bufferSize: 1, refCount: true })
+  // );
 
   async createPairByEmail(partnerEmailRaw: string): Promise<void> {
     const me = this.auth.user();
@@ -85,10 +81,9 @@ export class PairService {
     const inSnap = await getDocs(qIn);
     if (!inSnap.empty) throw new Error('У вас уже есть входящее приглашение от этого пользователя');
 
-    // inviteId теперь НЕ pairId. Это новый документ каждый раз.
     const inviteRef = doc(invitesCol) as unknown as DocumentReference<PairInvite>;
 
-    const invite: PairInvite = {
+    const invite: WithFieldValue<PairInvite> = {
       pairId,
       fromUid: a,
       toUid: b,
@@ -124,13 +119,9 @@ export class PairService {
       const myPairId = mySnap.data()?.pairId ?? null;
       if (myPairId) throw new Error('Вы уже состоите в паре');
 
-      // пары всегда по pairId
       const pairRef = doc(this.fs, `pairs/${inv.pairId}`) as unknown as DocumentReference<Pair>;
-
-      // всегда сортируем members, чтобы никогда не ломать rules по сравнению массивов
       const members = [inv.fromUid, inv.toUid].sort();
 
-      // если пара была ended — реактивируем
       const pairUpsert: WithFieldValue<Pair> = {
         members,
         status: 'active',
@@ -142,7 +133,6 @@ export class PairService {
 
       tx.set(pairRef, pairUpsert, { merge: true });
 
-      // пишем себе пару
       tx.update(myRef, {
         pairId: inv.pairId,
         partnerUid: inv.fromUid,
@@ -150,7 +140,6 @@ export class PairService {
         updatedAt: serverTimestamp(),
       });
 
-      // отмечаем инвайт принятым
       tx.update(inviteRef, {
         status: 'accepted',
         acceptedAt: serverTimestamp(),
@@ -199,9 +188,8 @@ export class PairService {
       if (!mySnap.exists()) return;
 
       const myPairId = mySnap.data()?.pairId ?? null;
-      if (myPairId) return; // уже в паре
+      if (myPairId) return;
 
-      // проверяем, что пара активна (иначе НЕ прикрепляем старую ended пару)
       const pairRef = doc(this.fs, `pairs/${inv.pairId}`) as unknown as DocumentReference<Pair>;
       const pairSnap = await tx.get(pairRef);
       if (!pairSnap.exists()) return;
@@ -210,7 +198,6 @@ export class PairService {
       const ended = pair?.status === 'ended' || pair?.endedAt != null;
       if (ended) return;
 
-      // set merge вместо update — надёжнее
       tx.set(
         myRef,
         {
@@ -240,7 +227,6 @@ export class PairService {
       const pairSnap = await tx.get(pairRef);
 
       if (!pairSnap.exists()) {
-        // если пары нет — просто чистим профиль
         tx.set(
           myRef,
           {
@@ -258,14 +244,12 @@ export class PairService {
       const members = Array.isArray(pair?.members) ? pair.members : [];
       if (!members.includes(me.uid)) throw new Error('Нет доступа к этой паре');
 
-      // помечаем пару завершённой (members не трогаем)
       tx.update(pairRef, {
         status: 'ended',
         endedAt: serverTimestamp(),
         endedBy: me.uid,
       });
 
-      // чистим ТОЛЬКО свой профиль
       tx.set(
         myRef,
         {
@@ -288,7 +272,6 @@ export class PairService {
 
     const pairSnap = await getDoc(pairRef);
 
-    // если пары нет — считаем что она неактуальна и чистим профиль
     if (!pairSnap.exists()) {
       await setDoc(
         myRef,
@@ -305,10 +288,8 @@ export class PairService {
 
     const pair = pairSnap.data();
     const ended = pair?.status === 'ended' || pair?.endedAt != null;
-
     if (!ended) return;
 
-    // чистим только свой профиль
     await setDoc(
       myRef,
       {

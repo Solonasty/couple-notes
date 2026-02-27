@@ -1,7 +1,7 @@
 import { FsTime } from "./fs-time.type";
 
 export type ReportDoc = {
-    id?: string;
+    id?: string; /** приходит через idField */
     status: ReportDocStatus;
     createdAt?: FsTime;
     createdBy?: string;

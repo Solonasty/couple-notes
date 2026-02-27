@@ -8,14 +8,28 @@ import {
   orderBy,
   where,
 } from '@angular/fire/firestore';
-import { addDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { Observable, of, switchMap, map, shareReplay, combineLatest, firstValueFrom, filter, take } from 'rxjs';
+import {
+  addDoc,
+  deleteDoc,
+  updateDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
+import {
+  Observable,
+  of,
+  switchMap,
+  map,
+  shareReplay,
+  combineLatest,
+  firstValueFrom,
+  filter,
+  take,
+} from 'rxjs';
 
 import { AuthService } from './auth.service';
 import { PairContextService } from './pair-context.service';
 import { PairNotesCtx } from '../models/pair-note-ctx.type';
 import { Note } from '../models/note.type';
-
 
 function hasPair(ctx: PairNotesCtx | null): ctx is PairNotesCtx {
   return !!ctx;
@@ -27,11 +41,10 @@ export class NotesService {
   private auth = inject(AuthService);
   private pairCtx = inject(PairContextService);
 
-  // Контекст есть только когда пользователь авторизован и есть activePair
   private ctx$ = combineLatest([this.auth.user$, this.pairCtx.activePair$]).pipe(
     map(([user, activePair]): PairNotesCtx | null => {
       if (!user || !activePair) return null;
-      return { uid: user.uid, pairId: activePair.id || ''};
+      return { uid: user.uid, pairId: activePair.id || '' };
     }),
     shareReplay({ bufferSize: 1, refCount: true })
   );
@@ -46,7 +59,7 @@ export class NotesService {
 
   notes$(): Observable<Note[]> {
     return this.ctx$.pipe(
-      switchMap(ctx => {
+      switchMap((ctx) => {
         if (!ctx) return of([] as Note[]);
 
         const q = query(
@@ -64,14 +77,16 @@ export class NotesService {
     const uid = this.auth.uid();
     if (!uid) throw new Error('Not authenticated');
 
-    const ctx = await this.getCtx(); // гарантирует, что есть пара
+    const ctx = await this.getCtx();
 
-    return addDoc(this.col(ctx), {
+    const data = {
       text,
       ownerUid: uid,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-    });
+    };
+
+    return addDoc(this.col(ctx), data);
   }
 
   async update(id: string, text: string) {
@@ -80,10 +95,12 @@ export class NotesService {
 
     const ctx = await this.getCtx();
 
-    return updateDoc(doc(this.fs, `pairs/${ctx.pairId}/notes/${id}`), {
+    const patch = {
       text,
       updatedAt: serverTimestamp(),
-    });
+    };
+
+    return updateDoc(doc(this.fs, `pairs/${ctx.pairId}/notes/${id}`), patch);
   }
 
   async remove(id: string) {
@@ -91,7 +108,6 @@ export class NotesService {
     if (!uid) throw new Error('Not authenticated');
 
     const ctx = await this.getCtx();
-
     return deleteDoc(doc(this.fs, `pairs/${ctx.pairId}/notes/${id}`));
   }
 }
