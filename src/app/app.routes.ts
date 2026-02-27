@@ -4,10 +4,8 @@ import { authGuard } from './core/services/auth.guard';
 
 
 export const routes: Routes = [
-  // Главная всегда ведёт в приложение
   { path: '', pathMatch: 'full', redirectTo: 'app' },
 
-  // Авторизация (доступна всем)
   {
     path: 'auth',
     children: [
@@ -16,7 +14,6 @@ export const routes: Routes = [
     ],
   },
 
-  // Приложение (только для залогиненных)
   {
     path: 'app',
     component: ShellComponent,
@@ -32,6 +29,5 @@ export const routes: Routes = [
     ],
   },
 
-  // всё остальное на главную
   { path: '**', redirectTo: '' },
 ];

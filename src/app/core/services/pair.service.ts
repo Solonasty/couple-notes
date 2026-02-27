@@ -20,32 +20,10 @@ import type {
 
 import { AuthService } from './auth.service';
 import { PairContextService } from './pair-context.service';
-import { PairInvite } from './pair.types';
+import { User } from '../models/user.type';
+import { PairInvite } from '../models/pair-invite.type';
+import { Pair } from '../models/pair.type';
 
-type UserDoc = {
-  email?: string | null;
-
-  pairId?: string | null;
-  partnerUid?: string | null;
-  partnerEmail?: string | null;
-
-  updatedAt?: FieldValue;
-};
-
-type PairDoc = {
-  members?: string[];
-  status?: 'active' | 'ended';
-
-  endedAt?: FieldValue | null;
-  endedBy?: string | null;
-
-  createdAt?: FieldValue;
-  reactivatedAt?: FieldValue;
-};
-
-type PairInviteDoc = PairInvite & {
-  acceptedAt?: FieldValue;
-};
 
 @Injectable({ providedIn: 'root' })
 export class PairService {
@@ -108,9 +86,9 @@ export class PairService {
     if (!inSnap.empty) throw new Error('У вас уже есть входящее приглашение от этого пользователя');
 
     // inviteId теперь НЕ pairId. Это новый документ каждый раз.
-    const inviteRef = doc(invitesCol) as unknown as DocumentReference<PairInviteDoc>;
+    const inviteRef = doc(invitesCol) as unknown as DocumentReference<PairInvite>;
 
-    const invite: PairInviteDoc = {
+    const invite: PairInvite = {
       pairId,
       fromUid: a,
       toUid: b,
@@ -127,8 +105,8 @@ export class PairService {
     const me = this.auth.user();
     if (!me) throw new Error('Вы не авторизованы');
 
-    const inviteRef = doc(this.fs, `pairInvites/${inviteId}`) as unknown as DocumentReference<PairInviteDoc>;
-    const myRef = doc(this.fs, `users/${me.uid}`) as unknown as DocumentReference<UserDoc>;
+    const inviteRef = doc(this.fs, `pairInvites/${inviteId}`) as unknown as DocumentReference<PairInvite>;
+    const myRef = doc(this.fs, `users/${me.uid}`) as unknown as DocumentReference<User>;
 
     await runTransaction(this.fs, async (tx) => {
       const invSnap = await tx.get(inviteRef);
@@ -147,13 +125,13 @@ export class PairService {
       if (myPairId) throw new Error('Вы уже состоите в паре');
 
       // пары всегда по pairId
-      const pairRef = doc(this.fs, `pairs/${inv.pairId}`) as unknown as DocumentReference<PairDoc>;
+      const pairRef = doc(this.fs, `pairs/${inv.pairId}`) as unknown as DocumentReference<Pair>;
 
       // всегда сортируем members, чтобы никогда не ломать rules по сравнению массивов
       const members = [inv.fromUid, inv.toUid].sort();
 
       // если пара была ended — реактивируем
-      const pairUpsert: WithFieldValue<PairDoc> = {
+      const pairUpsert: WithFieldValue<Pair> = {
         members,
         status: 'active',
         endedAt: null,
@@ -184,7 +162,7 @@ export class PairService {
     const me = this.auth.user();
     if (!me) throw new Error('Вы не авторизованы');
 
-    const inviteRef = doc(this.fs, `pairInvites/${inviteId}`) as unknown as DocumentReference<PairInviteDoc>;
+    const inviteRef = doc(this.fs, `pairInvites/${inviteId}`) as unknown as DocumentReference<PairInvite>;
 
     await runTransaction(this.fs, async (tx) => {
       const invSnap = await tx.get(inviteRef);
@@ -204,8 +182,8 @@ export class PairService {
     const me = this.auth.user();
     if (!me) throw new Error('Вы не авторизованы');
 
-    const inviteRef = doc(this.fs, `pairInvites/${inviteId}`) as unknown as DocumentReference<PairInviteDoc>;
-    const myRef = doc(this.fs, `users/${me.uid}`) as unknown as DocumentReference<UserDoc>;
+    const inviteRef = doc(this.fs, `pairInvites/${inviteId}`) as unknown as DocumentReference<PairInvite>;
+    const myRef = doc(this.fs, `users/${me.uid}`) as unknown as DocumentReference<User>;
 
     await runTransaction(this.fs, async (tx) => {
       const invSnap = await tx.get(inviteRef);
@@ -224,7 +202,7 @@ export class PairService {
       if (myPairId) return; // уже в паре
 
       // проверяем, что пара активна (иначе НЕ прикрепляем старую ended пару)
-      const pairRef = doc(this.fs, `pairs/${inv.pairId}`) as unknown as DocumentReference<PairDoc>;
+      const pairRef = doc(this.fs, `pairs/${inv.pairId}`) as unknown as DocumentReference<Pair>;
       const pairSnap = await tx.get(pairRef);
       if (!pairSnap.exists()) return;
 
@@ -240,7 +218,7 @@ export class PairService {
           partnerUid: inv.toUid,
           partnerEmail: inv.toEmail,
           updatedAt: serverTimestamp(),
-        } satisfies WithFieldValue<UserDoc>,
+        } satisfies WithFieldValue<User>,
         { merge: true }
       );
     });
@@ -250,13 +228,13 @@ export class PairService {
     const me = this.auth.user();
     if (!me) throw new Error('Вы не авторизованы');
 
-    const myRef = doc(this.fs, `users/${me.uid}`) as unknown as DocumentReference<UserDoc>;
+    const myRef = doc(this.fs, `users/${me.uid}`) as unknown as DocumentReference<User>;
     const mySnap = await getDoc(myRef);
 
     const pairId = mySnap.data()?.pairId ?? null;
     if (!pairId) throw new Error('Вы не состоите в паре');
 
-    const pairRef = doc(this.fs, `pairs/${pairId}`) as unknown as DocumentReference<PairDoc>;
+    const pairRef = doc(this.fs, `pairs/${pairId}`) as unknown as DocumentReference<Pair>;
 
     await runTransaction(this.fs, async (tx) => {
       const pairSnap = await tx.get(pairRef);
@@ -270,7 +248,7 @@ export class PairService {
             partnerUid: null,
             partnerEmail: null,
             updatedAt: serverTimestamp(),
-          } satisfies WithFieldValue<UserDoc>,
+          } satisfies WithFieldValue<User>,
           { merge: true }
         );
         return;
@@ -295,7 +273,7 @@ export class PairService {
           partnerUid: null,
           partnerEmail: null,
           updatedAt: serverTimestamp(),
-        } satisfies WithFieldValue<UserDoc>,
+        } satisfies WithFieldValue<User>,
         { merge: true }
       );
     });
@@ -305,8 +283,8 @@ export class PairService {
     const me = this.auth.user();
     if (!me) return;
 
-    const myRef = doc(this.fs, `users/${me.uid}`) as unknown as DocumentReference<UserDoc>;
-    const pairRef = doc(this.fs, `pairs/${pairId}`) as unknown as DocumentReference<PairDoc>;
+    const myRef = doc(this.fs, `users/${me.uid}`) as unknown as DocumentReference<User>;
+    const pairRef = doc(this.fs, `pairs/${pairId}`) as unknown as DocumentReference<Pair>;
 
     const pairSnap = await getDoc(pairRef);
 
@@ -319,7 +297,7 @@ export class PairService {
           partnerUid: null,
           partnerEmail: null,
           updatedAt: serverTimestamp(),
-        } satisfies WithFieldValue<UserDoc>,
+        } satisfies WithFieldValue<User>,
         { merge: true }
       );
       return;
@@ -338,7 +316,7 @@ export class PairService {
         partnerUid: null,
         partnerEmail: null,
         updatedAt: serverTimestamp(),
-      } satisfies WithFieldValue<UserDoc>,
+      } satisfies WithFieldValue<User>,
       { merge: true }
     );
   }

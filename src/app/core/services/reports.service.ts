@@ -36,7 +36,11 @@ import {
 import { AuthService } from './auth.service';
 import { PairContextService } from './pair-context.service';
 import { SummaryService } from './summary.service';
-import { Note } from './pair.types';
+import { Note } from '../models/note.type';
+import {  ReportDoc, ReportSourceNote } from '../models/report-doc.type';
+
+import { FsTime } from '../models/fs-time.type';
+import { Schedule } from '../models/schedule.type';
 
 // const REPORT_PERIOD_OVERRIDE: { startISO: string; endISO: string } | null = {
 //   startISO: '2026-02-06T18:00:00+03:00',
@@ -45,53 +49,11 @@ import { Note } from './pair.types';
 
 const REPORT_PERIOD_OVERRIDE: { startISO: string; endISO: string } | null = {
   startISO: '2026-02-11T18:00:00+03:00',
-  endISO: '2026-02-13T10:20:00+03:00',
+  endISO: '2026-02-24T16:00:00+03:00',
 };
 // const REPORT_PERIOD_OVERRIDE: { startISO: string; endISO: string } | null = null;
 
 const REPORT_SHIFT_WEEKS = 0;
-
-type FsTime = Timestamp | FieldValue | null | undefined;
-
-export type ReportSourceNote = {
-  id: string;
-  text: string;
-  ownerUid: string;
-  updatedAt?: FsTime;
-};
-
-export type ReportDoc = {
-  id: string;
-  status: 'generating' | 'ready' | 'error';
-  createdAt?: FsTime;
-  createdBy?: string;
-  periodStart?: FsTime;
-  periodEnd?: FsTime;
-  notesCount?: number;
-  summary?: string | null;
-  error?: string | null;
-  sourceNotes?: ReportSourceNote[];
-  updatedAt?: FsTime;
-};
-
-type FirestoreReportDoc = Omit<ReportDoc, 'id'>;
-// для docData(idField:'id') нужно, чтобы тип содержал ключ 'id'
-type FirestoreReportDocWithId = FirestoreReportDoc & { id: string };
-
-export type Schedule = {
-  inPair: boolean;
-  pairId: string | null;
-  uid: string | null;
-
-  slotEnd: Date | null;
-  slotStart: Date | null;
-  reportId: string | null;
-
-  nextAt: Date | null;
-  msToNext: number | null;
-
-  due: boolean;
-};
 
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
@@ -104,7 +66,7 @@ export class ReportsService {
   readonly schedule$: Observable<Schedule> = combineLatest([
     this.auth.user$,
     this.pairCtx.activePair$,
-    timer(0, 60_000),
+    timer(0, 90_000),
   ]).pipe(
     map(([user, pair]) => {
       const now = new Date();
@@ -129,7 +91,7 @@ export class ReportsService {
 
       return {
         inPair: true,
-        pairId: pair.id,
+        pairId: pair.id || null,
         uid: user.uid,
         slotStart,
         slotEnd,
@@ -149,11 +111,11 @@ export class ReportsService {
       const ref = doc(
         this.fs,
         `pairs/${s.pairId}/reports/${s.reportId}`
-      ) as unknown as DocumentReference<FirestoreReportDoc>;
+      ) as unknown as DocumentReference<ReportDoc>;
 
       // docData(idField:'id') требует, чтобы key существовал в типе
       const refWithId =
-        ref as unknown as DocumentReference<FirestoreReportDocWithId>;
+        ref as unknown as DocumentReference<ReportDoc>;
 
       return docData(refWithId, { idField: 'id' }).pipe(
         map((d) => (d ? (d as unknown as ReportDoc) : null)),
@@ -181,7 +143,7 @@ export class ReportsService {
     const reportRef = doc(
       this.fs,
       `pairs/${s.pairId}/reports/${s.reportId}`
-    ) as unknown as DocumentReference<FirestoreReportDoc>;
+    ) as unknown as DocumentReference<ReportDoc>;
 
     let shouldGenerate = false;
 
@@ -198,7 +160,7 @@ export class ReportsService {
 
       shouldGenerate = true;
 
-      const init: WithFieldValue<FirestoreReportDoc> = {
+      const init: WithFieldValue<ReportDoc> = {
         status: 'generating',
         createdAt: serverTimestamp(),
         createdBy: uid,
@@ -247,7 +209,7 @@ export class ReportsService {
 
       const summaryText = await firstValueFrom(this.summary.getSummary(notes));
 
-      const readyPatch: UpdateData<FirestoreReportDoc> = {
+      const readyPatch: UpdateData<ReportDoc> = {
         status: 'ready',
         summary: summaryText,
         error: null,
@@ -260,7 +222,7 @@ export class ReportsService {
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'LLM_ERROR';
 
-      const errorPatch: UpdateData<FirestoreReportDoc> = {
+      const errorPatch: UpdateData<ReportDoc> = {
         status: 'error',
         error: String(msg).slice(0, 500),
         updatedAt: serverTimestamp(),

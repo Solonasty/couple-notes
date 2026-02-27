@@ -2,7 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
-import { UiButtonComponent, UiInputComponent } from '@/app/ui';
+import { UiButtonComponent } from '@/app/ui/ui-button/ui-button.component';
+import { UiInputComponent } from '@/app/ui/ui-input/ui-input.component';
 
 @Component({
   standalone: true,

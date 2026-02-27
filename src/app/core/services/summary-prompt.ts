@@ -1,23 +1,13 @@
-export type NoteForSummary = { text: string };
+import { Note } from "../models/note.type";
 
-export function buildWeeklySummaryPrompt(notes: NoteForSummary[]): string {
+
+
+export function buildWeeklySummaryPrompt(notes: Note[]): string {
+  console.log(notes)
   const input = notes
-    .map((n, i) => `${i + 1}) ${n.text.trim()}`)
+    .map((n, i) => `${i + 1}) ${String(n?.text ?? "").trim()}`)
     .filter(line => line.length > 3)
-    .join('\n')
-    .slice(0, 8000);
+    .join("\n");
 
-  return (
-    `Заметки за неделю (единственный источник правды):\n` +
-    `${input || "(нет текста)"}\n\n` +
-    `Сделай сводку СТРОГО по этим заметкам.\n` +
-    `Правила:\n` +
-    `1) НИЧЕГО не выдумывай. Не добавляй события/покупки/эмоции, которых нет в заметках.\n` +
-    `2) Если данных недостаточно — прямо так и напиши: "В заметках нет информации про ...".\n` +
-    `3) Пиши по-русски.\n` +
-    `4) Формат ответа:\n` +
-    `   - Темы недели (3–5 пунктов). У каждого пункта в конце укажи номера заметок в скобках, например (1, 3).\n` +
-    `   - Короткая сводка (2–4 предложения) без домыслов.\n` +
-    `   - План на следующую неделю (1–3 действия) — только если их можно обосновать заметками, иначе напиши "Нет достаточных данных для плана".\n`
-  );
+  return input;
 }

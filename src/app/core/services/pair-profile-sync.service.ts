@@ -13,18 +13,7 @@ import {
 } from 'rxjs';
 import { AuthService } from './auth.service';
 import { PairContextService } from './pair-context.service';
-import { UserProfile } from './pair.types';
-
-type PublicUser = {
-  email?: string | null;
-};
-
-type UserDocPatch = {
-  pairId: string | null;
-  partnerUid: string | null;
-  partnerEmail: string | null;
-  updatedAt: FieldValue;
-};
+import { User } from '../models/user.type';
 
 @Injectable({ providedIn: 'root' })
 export class PairProfileSyncService {
@@ -37,8 +26,8 @@ export class PairProfileSyncService {
       switchMap((user) => {
         if (!user) return EMPTY;
 
-        const myRef = doc(this.fs, `users/${user.uid}`) as unknown as DocumentReference<UserProfile>;
-        const myProfile$ = docData(myRef) as unknown as Observable<UserProfile>;
+        const myRef = doc(this.fs, `users/${user.uid}`) as unknown as DocumentReference<User>;
+        const myProfile$ = docData(myRef) as unknown as Observable<User>;
 
         return combineLatest({
           profile: myProfile$,
@@ -63,7 +52,7 @@ export class PairProfileSyncService {
             if (!activePair) {
               if (!currentPairId) return EMPTY;
 
-              const patch: UserDocPatch = {
+              const patch: User = {
                 pairId: null,
                 partnerUid: null,
                 partnerEmail: null,
@@ -87,7 +76,7 @@ export class PairProfileSyncService {
 
             // если партнёр ещё не определён — просто пишем pairId, а партнёрские поля очищаем
             if (!partnerUid) {
-              const patch: UserDocPatch = {
+              const patch: User = {
                 pairId: nextPairId,
                 partnerUid: null,
                 partnerEmail: null,
@@ -101,14 +90,14 @@ export class PairProfileSyncService {
             const partnerPublicRef = doc(
               this.fs,
               `publicUsers/${partnerUid}`
-            ) as unknown as DocumentReference<PublicUser>;
+            ) as unknown as DocumentReference<User>;
 
-            const partnerPublic$ = docData(partnerPublicRef) as unknown as Observable<PublicUser>;
+            const partnerPublic$ = docData(partnerPublicRef) as unknown as Observable<User>;
 
             return partnerPublic$.pipe(
               take(1),
               switchMap((partnerPublic) => {
-                const patch: UserDocPatch = {
+                const patch: User = {
                   pairId: nextPairId,
                   partnerUid,
                   partnerEmail: partnerPublic.email ?? null,

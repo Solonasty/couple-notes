@@ -13,9 +13,9 @@ import { Observable, of, switchMap, map, shareReplay, combineLatest, firstValueF
 
 import { AuthService } from './auth.service';
 import { PairContextService } from './pair-context.service';
-import { Note } from './pair.types';
+import { PairNotesCtx } from '../models/pair-note-ctx.type';
+import { Note } from '../models/note.type';
 
-type PairNotesCtx = { uid: string; pairId: string };
 
 function hasPair(ctx: PairNotesCtx | null): ctx is PairNotesCtx {
   return !!ctx;
@@ -31,7 +31,7 @@ export class NotesService {
   private ctx$ = combineLatest([this.auth.user$, this.pairCtx.activePair$]).pipe(
     map(([user, activePair]): PairNotesCtx | null => {
       if (!user || !activePair) return null;
-      return { uid: user.uid, pairId: activePair.id };
+      return { uid: user.uid, pairId: activePair.id || ''};
     }),
     shareReplay({ bufferSize: 1, refCount: true })
   );

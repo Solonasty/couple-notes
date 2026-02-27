@@ -1,7 +1,7 @@
+import { UiSectionHeaderComponent } from '@/app/ui/section-header/section-header.component';
+import { UiButtonComponent } from '@/app/ui/ui-button/ui-button.component';
 import { Component } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
-
-import { UiButtonComponent, UiSectionHeaderComponent } from '@/app/ui';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';

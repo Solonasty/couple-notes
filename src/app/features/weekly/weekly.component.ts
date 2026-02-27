@@ -3,12 +3,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 import {
   ReportsService,
-  ReportDoc,
-  Schedule,
-  ReportSourceNote,
 } from '../../core/services/reports.service';
 
 import { UiButtonComponent } from '@/app/ui';
+import { ReportDoc, ReportSourceNote } from '@/app/core/models/report-doc.type';
+
+import { Schedule } from '@/app/core/models/schedule.type';
 
 const SCHEDULE_INIT: Schedule = {
   inPair: false,

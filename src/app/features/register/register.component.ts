@@ -3,7 +3,7 @@ import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { Firestore, doc, setDoc, serverTimestamp } from '@angular/fire/firestore';
-import { UiButtonComponent, UiIconComponent, UiInputComponent } from '@/app/ui';
+import { UiButtonComponent, UiInputComponent, UiIconComponent } from '@/app/ui';
 
 @Component({
   standalone: true,

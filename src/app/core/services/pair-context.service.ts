@@ -9,9 +9,8 @@ import {
 } from '@angular/fire/firestore';
 import { Observable, of, switchMap, map, shareReplay } from 'rxjs';
 import { AuthService } from './auth.service';
-import { PairDoc } from './pair.types';
+import { ActivePair, Pair } from '../models/pair.type';
 
-export type ActivePair = (PairDoc & { id: string }) | null;
 
 @Injectable({ providedIn: 'root' })
 export class PairContextService {
@@ -29,7 +28,7 @@ export class PairContextService {
         limit(1)
       );
 
-      return (collectionData(q, { idField: 'id' }) as unknown as Observable<(PairDoc & { id: string })[]>).pipe(
+      return (collectionData(q, { idField: 'id' }) as unknown as Observable<(Pair & { id: string })[]>).pipe(
         map(arr => (arr.length ? arr[0] : null))
       );
     }),

@@ -6,12 +6,13 @@ import { Observable, of, switchMap, startWith } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
 import { PairService } from '../../core/services/pair.service';
-import { PairInvite, UserProfile } from '../../core/services/pair.types';
 
 import { doc, docData } from '@angular/fire/firestore';
 import { map } from 'rxjs/operators';
 
 import { UiButtonComponent, UiInputComponent } from '@/app/ui';
+import { PairInvite } from '@/app/core/models/pair-invite.type';
+import { User } from '@/app/core/models/user.type';
 
 type PairInviteDoc = PairInvite & { id: string };
 
@@ -47,12 +48,12 @@ export class PairComponent {
   readonly outgoingInvites = this.invitesSignal('fromUid', 'pending');
   readonly acceptedSentInvites = this.invitesSignal('fromUid', 'accepted');
 
-  readonly myProfile = toSignal<UserProfile | null>(
+  readonly myProfile = toSignal<User | null>(
     (toObservable(this.uid) as Observable<string | null>).pipe(
       switchMap((uid) => {
         if (!uid) return of(null);
         const ref = doc(this.fs, `users/${uid}`);
-        return (docData(ref) as Observable<UserProfile>).pipe(map((p) => p ?? null));
+        return (docData(ref) as Observable<User>).pipe(map((p) => p ?? null));
       })
     ),
     { initialValue: null }

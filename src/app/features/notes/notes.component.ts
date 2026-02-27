@@ -15,9 +15,9 @@ import {
 } from 'rxjs/operators';
 
 import { NotesService } from '../../core/services/notes.service';
-import { Note } from '../../core/services/pair.types';
 import { PairContextService } from '../../core/services/pair-context.service';
 import { UiButtonComponent, UiIconComponent } from '@/app/ui';
+import { Note } from '@/app/core/models/note.type';
 
 type DetailMode = 'edit' | 'create';
 

@@ -74,49 +74,5 @@
         <pre class="report-pre">{{ summary() }}</pre>
       </div>
     }
-
-    <!-- Метаданные отчёта -->
-    @if (report()?.status === 'ready') {
-      <div class="section">
-        <h2 class="section-title">Информация</h2>
-
-        <div class="meta-grid">
-          <div class="meta-item">
-            <div class="label">Сформировал</div>
-            <div class="value">{{ report()?.createdBy }}</div>
-          </div>
-
-          <div class="meta-item">
-            <div class="label">Заметок в отчёте</div>
-            <div class="value">{{ report()?.notesCount }}</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
-        <h2 class="section-title">Заметки для отчёта</h2>
-        <p class="muted debug-caption">Debug: заметки, использованные для генерации</p>
-
-        @if (!hasSourceNotes()) {
-          <p class="muted">Список пуст.</p>
-        } @else {
-          <div class="notes-list">
-            @for (n of sourceNotes(); track n.id) {
-              <div class="note-card">
-                <div class="note-meta">
-                  <span><b>ownerUid:</b> {{ n.ownerUid }}</span>
-                  <span>·</span>
-                  <span><b>noteId:</b> {{ n.id }}</span>
-                </div>
-
-                <div class="note-text">
-                  {{ n.text }}
-                </div>
-              </div>
-            }
-          </div>
-        }
-      </div>
-    }
   </div>
 </div>
