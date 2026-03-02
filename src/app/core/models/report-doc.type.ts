@@ -20,5 +20,6 @@ export type ReportSourceNote = {
     id: string;
     text: string;
     ownerUid: string;
+    ownerName: string;
     updatedAt?: FsTime;
 };

@@ -57,6 +57,22 @@ export class NotesService {
     return collection(this.fs, `pairs/${ctx.pairId}/notes`);
   }
 
+  private getOwnerName(): string {
+    // 1) имя из Firestore профиля (users/{uid})
+    const profileName = this.auth.profile()?.name?.trim();
+    if (profileName) return profileName;
+
+    // 2) имя из Firebase Auth
+    const authName = this.auth.user()?.displayName?.trim();
+    if (authName) return authName;
+
+    // 3) fallback: email -> часть до @
+    const email = (this.auth.user()?.email ?? this.auth.profile()?.email ?? '').trim();
+    if (email.includes('@')) return email.split('@')[0];
+
+    return 'Пользователь';
+  }
+
   notes$(): Observable<Note[]> {
     return this.ctx$.pipe(
       switchMap((ctx) => {
@@ -82,6 +98,7 @@ export class NotesService {
     const data = {
       text,
       ownerUid: uid,
+      ownerName: this.getOwnerName(),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };

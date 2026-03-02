@@ -17,7 +17,6 @@ import type {
 } from 'firebase/firestore';
 
 import { AuthService } from './auth.service';
-import { PairContextService } from './pair-context.service';
 import { User } from '../models/user.type';
 import { PairInvite } from '../models/pair-invite.type';
 import { Pair } from '../models/pair.type';
@@ -26,16 +25,7 @@ import { Pair } from '../models/pair.type';
 export class PairService {
   private fs = inject(Firestore);
   private auth = inject(AuthService);
-  private pairCtx = inject(PairContextService);
 
-  // private ctx$ = combineLatest([this.auth.user$, this.pairCtx.activePair$]).pipe(
-  //   map(([user, activePair]) => {
-  //     if (!user) return { mode: 'none' as const };
-  //     if (activePair) return { mode: 'pair' as const, uid: user.uid, pairId: activePair.id };
-  //     return { mode: 'solo' as const, uid: user.uid };
-  //   }),
-  //   shareReplay({ bufferSize: 1, refCount: true })
-  // );
 
   async createPairByEmail(partnerEmailRaw: string): Promise<void> {
     const me = this.auth.user();
@@ -109,9 +99,6 @@ export class PairService {
 
       const inv = invSnap.data();
       if (!inv) throw new Error('Приглашение не найдено');
-
-      if (inv.toUid !== me.uid) throw new Error('Это приглашение не для вас');
-      if (inv.status !== 'pending') throw new Error('Приглашение уже обработано');
 
       const mySnap = await tx.get(myRef);
       if (!mySnap.exists()) throw new Error('Ваш профиль users/{uid} не найден');
@@ -216,50 +203,37 @@ export class PairService {
     if (!me) throw new Error('Вы не авторизованы');
 
     const myRef = doc(this.fs, `users/${me.uid}`) as unknown as DocumentReference<User>;
-    const mySnap = await getDoc(myRef);
 
-    const pairId = mySnap.data()?.pairId ?? null;
-    if (!pairId) throw new Error('Вы не состоите в паре');
-
-    const pairRef = doc(this.fs, `pairs/${pairId}`) as unknown as DocumentReference<Pair>;
+    const clearPatch = {
+      pairId: null,
+      partnerUid: null,
+      partnerEmail: null,
+      updatedAt: serverTimestamp(),
+    } satisfies WithFieldValue<User>;
 
     await runTransaction(this.fs, async (tx) => {
+      const mySnap = await tx.get(myRef);
+      if (!mySnap.exists()) throw new Error('Ваш профиль users/{uid} не найден');
+
+      const pairId = mySnap.data()?.pairId ?? null;
+      if (!pairId) throw new Error('Вы не состоите в паре');
+
+      const pairRef = doc(this.fs, `pairs/${pairId}`) as unknown as DocumentReference<Pair>;
       const pairSnap = await tx.get(pairRef);
 
-      if (!pairSnap.exists()) {
-        tx.set(
-          myRef,
-          {
-            pairId: null,
-            partnerUid: null,
-            partnerEmail: null,
-            updatedAt: serverTimestamp(),
-          } satisfies WithFieldValue<User>,
-          { merge: true }
-        );
-        return;
+      if (pairSnap.exists()) {
+        const pair = pairSnap.data();
+        const members = Array.isArray(pair?.members) ? pair.members : [];
+        if (!members.includes(me.uid)) throw new Error('Нет доступа к этой паре');
+
+        tx.update(pairRef, {
+          status: 'ended',
+          endedAt: serverTimestamp(),
+          endedBy: me.uid,
+        });
       }
 
-      const pair = pairSnap.data();
-      const members = Array.isArray(pair?.members) ? pair.members : [];
-      if (!members.includes(me.uid)) throw new Error('Нет доступа к этой паре');
-
-      tx.update(pairRef, {
-        status: 'ended',
-        endedAt: serverTimestamp(),
-        endedBy: me.uid,
-      });
-
-      tx.set(
-        myRef,
-        {
-          pairId: null,
-          partnerUid: null,
-          partnerEmail: null,
-          updatedAt: serverTimestamp(),
-        } satisfies WithFieldValue<User>,
-        { merge: true }
-      );
+      tx.set(myRef, clearPatch, { merge: true });
     });
   }
 
@@ -272,23 +246,12 @@ export class PairService {
 
     const pairSnap = await getDoc(pairRef);
 
-    if (!pairSnap.exists()) {
-      await setDoc(
-        myRef,
-        {
-          pairId: null,
-          partnerUid: null,
-          partnerEmail: null,
-          updatedAt: serverTimestamp(),
-        } satisfies WithFieldValue<User>,
-        { merge: true }
-      );
-      return;
-    }
+    const shouldClear =
+      !pairSnap.exists() ||
+      pairSnap.data()?.status === 'ended' ||
+      pairSnap.data()?.endedAt != null;
 
-    const pair = pairSnap.data();
-    const ended = pair?.status === 'ended' || pair?.endedAt != null;
-    if (!ended) return;
+    if (!shouldClear) return;
 
     await setDoc(
       myRef,

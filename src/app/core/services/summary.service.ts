@@ -19,7 +19,7 @@ export class SummaryService {
     return this.http
       .post<{ summary: string }>(
         this.url,
-        { input }, // ✅ важно: input, не prompt
+        { input },
         { responseType: 'json' as const }
       )
       .pipe(
@@ -40,7 +40,6 @@ function toHttpDebugError(err: unknown): Error {
       return new Error(`NETWORK/CORS (status 0): ${err.message || 'Unknown Error'}`);
     }
 
-    // если сервер вернул json {summary: "..."} или {error: "..."} — покажем
     let serverText = '';
     if (typeof err.error === 'string') {
       serverText = err.error.slice(0, 500);

@@ -192,20 +192,14 @@ export class ReportsService {
         ...(d.data() as Omit<Note, 'id'>),
       })) as Note[];
 
-      const sourceNotes: ReportSourceNote[] = notes.slice(0, 200).map((n) => {
-        const r = n as unknown as Record<string, unknown>;
 
-        const text = typeof r['text'] === 'string' ? r['text'] : '';
-        const ownerUid = typeof r['ownerUid'] === 'string' ? r['ownerUid'] : '';
-        const updatedAt = (r['updatedAt'] ?? null) as FsTime;
-
-        return {
-          id: n.id,
-          text: text.slice(0, 2000),
-          ownerUid,
-          updatedAt,
-        };
-      });
+      const sourceNotes: ReportSourceNote[] = notes.slice(0, 200).map((n) => ({
+        id: n.id,
+        text: (n.text ?? '').slice(0, 2000),
+        ownerUid: n.ownerUid,
+        ownerName: n.ownerName ?? null,
+        updatedAt: n.updatedAt ?? null,
+      }));
 
       const summaryText = await firstValueFrom(this.summary.getSummary(notes));
 

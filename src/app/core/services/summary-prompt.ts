@@ -1,7 +1,5 @@
 import { Note } from "../models/note.type";
 
-
-
 export function buildWeeklySummaryPrompt(notes: Note[]): string {
   console.log(notes)
   const input = notes
