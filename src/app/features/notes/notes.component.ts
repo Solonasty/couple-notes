@@ -24,7 +24,7 @@ type DetailMode = 'edit' | 'create';
 @Component({
   standalone: true,
   selector: 'app-notes',
-  imports: [ReactiveFormsModule, DatePipe,NgClass, UiButtonComponent, UiIconComponent],
+  imports: [ReactiveFormsModule, DatePipe,NgClass, UiButtonComponent, UiIconComponent, UiIconComponent],
   templateUrl: './notes.component.html',
   styleUrl: './notes.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,34 +60,52 @@ export class NotesComponent {
 
   // UI state
   readonly closing = signal(false);
-
+  readonly textCtrl = this.fb.nonNullable.control('', [Validators.maxLength(5000)]);
   // editor
   readonly editorForm = this.fb.nonNullable.group({
-    text: ['', [Validators.maxLength(5000)]],
+     text: this.textCtrl,
   });
 
   // saving state (for edit mode)
   readonly saving = signal(false);
   private lastSavedTrim = signal<string>(''); // trimmed text saved on server
+  private hydratedId = signal<string | null>(null);
 
+  readonly currentTrim = computed(() => this.textDraft().trim());
+
+  readonly hasChanges = computed(() => {
+    const trim = this.currentTrim();
+    if (this.detailMode() === 'create') return trim.length > 0;
+    return trim.length > 0 && trim !== this.lastSavedTrim();
+  });
+
+  readonly textDraft = signal('');
   constructor() {
-    // when opening an existing note -> set editor content
+
+  this.textCtrl.valueChanges
+  .pipe(takeUntilDestroyed(this.destroyRef))
+  .subscribe(v => this.textDraft.set(v));
     effect(() => {
       if (!this.isDetailOpen()) return;
 
       if (this.detailMode() === 'create') {
-        // new note
+        this.hydratedId.set('create');
+        this.textDraft.set('');
         this.editorForm.reset({ text: '' }, { emitEvent: false });
         this.lastSavedTrim.set('');
         this.closing.set(false);
         return;
       }
 
-      // edit existing
+      const id = this.openedId();
       const note = this.openedNote();
-      if (!note) return;
+      if (!id || !note) return;
+
+      if (this.hydratedId() === id) return;
+      this.hydratedId.set(id);
 
       const text = (note.text ?? '').toString();
+      this.textDraft.set(text);
       this.editorForm.reset({ text }, { emitEvent: false });
       this.lastSavedTrim.set(text.trim());
       this.closing.set(false);
@@ -199,6 +217,7 @@ export class NotesComponent {
   }
 
   private resetDetailState() {
+    this.hydratedId.set(null);
     this.closing.set(false);
     this.detailMode.set('edit');
     this.openedId.set(null);

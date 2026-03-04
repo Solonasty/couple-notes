@@ -1,11 +1,12 @@
 import { Note } from "../models/note.type";
 
 export function buildWeeklySummaryPrompt(notes: Note[]): string {
-  console.log(notes)
-  const input = notes
-    .map((n, i) => `${i + 1}) ${String(n?.text ?? "").trim()}`)
-    .filter(line => line.length > 3)
+  return notes
+    .map((n, i) => {
+      const name = String(n?.ownerName ?? "").trim() || "Неизвестно";
+      const text = String(n?.text ?? "").trim();
+      return `${i + 1}) [${name}] ${text}`;
+    })
+    .filter(line => line.length > 10)
     .join("\n");
-
-  return input;
 }

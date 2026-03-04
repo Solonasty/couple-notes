@@ -49,7 +49,7 @@
       <div class="detail-bar">
         <ui-button
           (click)="back()"
-          variant="ghost"
+          variant="primary"
           type="button"
           [disabled]="loading()">
           <ui-icon name="arrow_back"></ui-icon>
@@ -69,7 +69,14 @@
           </ui-button>
 
         } @else {
-          <div class="right-placeholder"></div>
+          <ui-icon
+            [ngClass]="{
+              'done-active': hasChanges(),
+              'done-idle': !hasChanges()
+            }"
+            name="done"
+            size="lg">
+          </ui-icon>
         }
       </div>
 

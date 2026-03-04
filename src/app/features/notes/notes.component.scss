@@ -144,7 +144,8 @@
 
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  padding-right: 10px;
+  padding-right: 24px;
+  padding-left: 24px;
 }
 
 .detail-meta-row {
@@ -221,4 +222,14 @@
 
 textarea {
   padding: 0;
+}
+
+.done-idle {
+  color: var(--app-ink);
+  opacity: 0.4;
+}
+
+.done-active {
+  color: green;
+  transition: 200ms ease;
 }

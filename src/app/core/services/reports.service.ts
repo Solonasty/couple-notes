@@ -39,7 +39,6 @@ import { SummaryService } from './summary.service';
 import { Note } from '../models/note.type';
 import {  ReportDoc, ReportSourceNote } from '../models/report-doc.type';
 
-import { FsTime } from '../models/fs-time.type';
 import { Schedule } from '../models/schedule.type';
 
 // const REPORT_PERIOD_OVERRIDE: { startISO: string; endISO: string } | null = {
@@ -49,7 +48,7 @@ import { Schedule } from '../models/schedule.type';
 
 const REPORT_PERIOD_OVERRIDE: { startISO: string; endISO: string } | null = {
   startISO: '2026-02-11T18:00:00+03:00',
-  endISO: '2026-02-24T16:00:00+03:00',
+  endISO: '2026-03-02T14:48:00+03:00',
 };
 // const REPORT_PERIOD_OVERRIDE: { startISO: string; endISO: string } | null = null;
 
