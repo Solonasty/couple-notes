@@ -43,96 +43,84 @@
     }
 
     <!-- Отправленные приглашения -->
-    <div class="section">
-      <h2 class="section-title">Отправленные приглашения</h2>
-
-      @if (outgoingInvites().length === 0) {
-        <p class="muted">Нет отправленных приглашений</p>
-      } @else {
-        <div class="list-grid">
-          @for (inv of outgoingInvites(); track inv.id) {
-            <div class="row-card">
-              <div class="label">Кому</div>
-              <div class="value">{{ inv.toEmail }}</div>
-            </div>
-          }
-        </div>
-      }
-    </div>
+    @if (outgoingInvites().length !== 0) {
+      <div class="section">
+        <h2 class="section-title">Отправленные приглашения</h2>
+          <div class="list-grid">
+            @for (inv of outgoingInvites(); track inv.id) {
+              <div class="row-card">
+                <div class="label">Кому</div>
+                <div class="value">{{ inv.toEmail }}</div>
+              </div>
+            }
+          </div>
+      </div>
+    }
 
     <!-- Полученные приглашения -->
-    <div class="section">
-      <h2 class="section-title">Полученные приглашения</h2>
+    @if (incomingInvites().length !== 0) {
+      <div class="section">
+        <h2 class="section-title">Полученные приглашения</h2>
+          <div class="list-grid">
+            @for (inv of incomingInvites(); track inv.id) {
+              <div class="row-card row-card--interactive">
+                <div class="row-card__content">
+                  <div class="label">От</div>
+                  <div class="value">{{ inv.fromEmail }}</div>
+                </div>
 
-      @if (incomingInvites().length === 0) {
-        <p class="muted">Нет приглашений</p>
-      } @else {
-        <div class="list-grid">
-          @for (inv of incomingInvites(); track inv.id) {
-            <div class="row-card row-card--interactive">
-              <div class="row-card__content">
-                <div class="label">От</div>
-                <div class="value">{{ inv.fromEmail }}</div>
+                <div class="actions-grid">
+                  <ui-button
+                    class="ui-btn--h48 ui-btn--no-dim"
+                    [full]="true"
+                    variant="primary"
+                    type="button"
+                    [disabled]="saving()"
+                    [loading]="saving()"
+                    (click)="acceptInvite(inv.id)">
+                    ПРИНЯТЬ
+                  </ui-button>
+
+                  <ui-button
+                    class="ui-btn--h48 ui-btn--no-dim"
+                    [full]="true"
+                    variant="danger"
+                    type="button"
+                    [disabled]="saving()"
+                    (click)="declineInvite(inv.id)">
+                    ОТКЛОНИТЬ
+                  </ui-button>
+                </div>
               </div>
-
-              <!-- ВАЖНО: grid, как в dashboard -->
-              <div class="actions-grid">
-                <ui-button
-                  class="ui-btn--h48 ui-btn--no-dim"
-                  [full]="true"
-                  variant="primary"
-                  type="button"
-                  [disabled]="saving()"
-                  [loading]="saving()"
-                  (click)="acceptInvite(inv.id)">
-                  ПРИНЯТЬ
-                </ui-button>
-
-                <ui-button
-                  class="ui-btn--h48 ui-btn--no-dim"
-                  [full]="true"
-                  variant="danger"
-                  type="button"
-                  [disabled]="saving()"
-                  (click)="declineInvite(inv.id)">
-                  ОТКЛОНИТЬ
-                </ui-button>
-              </div>
-            </div>
-          }
-        </div>
-      }
-    </div>
+            }
+          </div>
+      </div>
+    }
 
     <!-- Форма приглашения -->
-    <div class="section">
-      @if (canShowInviteForm()) {
-        <form class="form-block" [formGroup]="pairForm" (ngSubmit)="createInvite()">
-          <h2 class="section-title">Пригласить партнёра</h2>
+    @if (canShowInviteForm()) {
+      <div class="section">
+          <form class="form-block" [formGroup]="pairForm" (ngSubmit)="createInvite()">
+            <h2 class="section-title">Пригласить партнёра</h2>
 
-          <ui-input
-            formControlName="partnerEmail"
-            type="email"
-            placeholder="Email партнёра"
-            autocomplete="email">
-          </ui-input>
+            <ui-input
+              formControlName="partnerEmail"
+              type="email"
+              placeholder="Email партнёра"
+              autocomplete="email">
+            </ui-input>
 
-          <ui-button
-            class="ui-btn--h56 ui-btn--no-dim"
-            [full]="true"
-            variant="primary"
-            type="submit"
-            [disabled]="pairForm.invalid || saving()"
-            [loading]="saving()">
-            ОТПРАВИТЬ ПРИГЛАШЕНИЕ
-          </ui-button>
-        </form>
-      } @else {
-        <div class="hint">
-          Форма приглашения скрыта, потому что у вас есть активная пара или активное приглашение.
-          Если приглашение отклонено — форма появится автоматически.
-        </div>
-      }
-    </div>
+            <ui-button
+              class="ui-btn--h56 ui-btn--no-dim"
+              [full]="true"
+              variant="primary"
+              type="submit"
+              [disabled]="pairForm.invalid || saving()"
+              [loading]="saving()">
+              ОТПРАВИТЬ ПРИГЛАШЕНИЕ
+            </ui-button>
+          </form>
+      </div>
+    }
   </div>
 </div>

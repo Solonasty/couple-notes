@@ -9,6 +9,7 @@ import { NotesService } from '../../core/services/notes.service';
 import { PairContextService } from '../../core/services/pair-context.service';
 import { UiButtonComponent, UiIconComponent } from '@/app/ui';
 import { Note } from '@/app/core/models/note.type';
+import { ActivatedRoute, Router } from '@angular/router';
 
 type DetailState =
   | { kind: 'closed' }
@@ -83,6 +84,11 @@ export class NotesComponent {
     return false;
   });
 
+
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly createRequested = signal(false);
+
   constructor() {
     this.textCtrl.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -137,6 +143,39 @@ export class NotesComponent {
       }
     });
     this.destroyRef.onDestroy(() => void this.flushSave());
+
+    this.route.queryParamMap
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe((m) => {
+      const v = m.get('create');
+      if (v != null) this.createRequested.set(true);
+    });
+    effect(() => {
+      if (!this.createRequested()) return;
+      if (!this.inPair()) {
+        this.createRequested.set(false);
+        void this.clearCreateParam();
+        return;
+      }
+      this.createRequested.set(false);
+
+      void (async () => {
+        if (this.isDetailOpen()) {
+          await this.close(false);
+        }
+        this.openNew();
+        await this.clearCreateParam();
+      })();
+    });
+  }
+
+  private clearCreateParam(): Promise<boolean> {
+    return this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { create: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   // ========= OPENERS =========

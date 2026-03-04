@@ -54,6 +54,12 @@ export class ShellComponent {
     return (a + b).toUpperCase();
   }
 
+  async createNoteFromFab(): Promise<void> {
+    await this.router.navigate(['/app/notes'], {
+      queryParams: { create: Date.now() },
+    });
+  }
+
   async logout() {
     await this.auth.logout();
     await this.router.navigateByUrl('/auth/login', { replaceUrl: true });

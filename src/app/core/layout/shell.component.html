@@ -96,10 +96,10 @@
                     mat-fab
                     color="primary"
                     class="fab"
-                    routerLink="/app/ui-kit"
-                    aria-label="UI Kit">
+                    (click)="createNoteFromFab()"
+                    aria-label="Новая заметка">
                     <ui-icon name="add" size="hg"></ui-icon>
-                </button>
+              </button>
             </div>
         }
     </mat-sidenav-content>
