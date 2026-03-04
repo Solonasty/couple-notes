@@ -1,56 +1,54 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { DatePipe, NgClass } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { EMPTY, from } from 'rxjs';
-import {
-  debounceTime,
-  distinctUntilChanged,
-  filter,
-  map,
-  switchMap,
-  tap,
-  catchError,
-  finalize,
-} from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
 
 import { NotesService } from '../../core/services/notes.service';
 import { PairContextService } from '../../core/services/pair-context.service';
 import { UiButtonComponent, UiIconComponent } from '@/app/ui';
 import { Note } from '@/app/core/models/note.type';
 
-type DetailMode = 'edit' | 'create';
+type DetailState =
+  | { kind: 'closed' }
+  | { kind: 'create' }
+  | { kind: 'edit'; id: string };
 
 @Component({
   standalone: true,
   selector: 'app-notes',
-  imports: [ReactiveFormsModule, DatePipe,NgClass, UiButtonComponent, UiIconComponent, UiIconComponent],
+  imports: [ReactiveFormsModule, DatePipe, NgClass, UiButtonComponent, UiIconComponent],
   templateUrl: './notes.component.html',
   styleUrl: './notes.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotesComponent {
-  private fb = inject(FormBuilder);
-  private notesService = inject(NotesService);
-  private pairCtx = inject(PairContextService);
-  private destroyRef = inject(DestroyRef);
-  readonly loading = signal(false);
+  private readonly fb = inject(FormBuilder);
+  private readonly notesService = inject(NotesService);
+  private readonly pairCtx = inject(PairContextService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  // data
+  private readonly closeAnimMs = 200;
+  private readonly paletteSize = 7;
+
+  // ========= DATA =========
   readonly activePair = toSignal(this.pairCtx.activePair$, { initialValue: null });
   readonly inPair = computed(() => !!this.activePair());
 
   readonly notes = toSignal(this.notesService.notes$(), { initialValue: [] as Note[] });
   readonly notesCount = computed(() => (this.notes() ?? []).length);
 
-  // detail overlay state
-  readonly detailMode = signal<DetailMode>('edit');
-  readonly openedId = signal<string | null>(null);
+  // ========= DETAIL STATE =========
+  private readonly detail = signal<DetailState>({ kind: 'closed' });
 
-  readonly isDetailOpen = computed(() => this.detailMode() === 'create' || !!this.openedId());
-  readonly isEditMode = computed(() => this.detailMode() === 'edit');
-  readonly deleting = signal(false);
-  private readonly paletteSize = 7;
+  readonly isDetailOpen = computed(() => this.detail().kind !== 'closed');
+  readonly isEditMode = computed(() => this.detail().kind === 'edit');
+
+  readonly openedId = computed(() => {
+    const d = this.detail();
+    return d.kind === 'edit' ? d.id : null;
+  });
 
   readonly openedNote = computed<Note | null>(() => {
     const id = this.openedId();
@@ -58,206 +56,231 @@ export class NotesComponent {
     return (this.notes() ?? []).find((n) => n.id === id) ?? null;
   });
 
-  // UI state
+  // ========= UI STATE =========
   readonly closing = signal(false);
-  readonly textCtrl = this.fb.nonNullable.control('', [Validators.maxLength(5000)]);
-  // editor
-  readonly editorForm = this.fb.nonNullable.group({
-     text: this.textCtrl,
-  });
+  readonly deleting = signal(false);
 
-  // saving state (for edit mode)
   readonly saving = signal(false);
-  private lastSavedTrim = signal<string>(''); // trimmed text saved on server
-  private hydratedId = signal<string | null>(null);
+  readonly loading = computed(() => this.saving() || this.deleting());
 
-  readonly currentTrim = computed(() => this.textDraft().trim());
+  // ========= EDITOR =========
+  readonly textCtrl = this.fb.nonNullable.control('', [Validators.maxLength(5000)]);
+  readonly editorForm = this.fb.nonNullable.group({ text: this.textCtrl });
+
+  readonly draftText = signal<string>('');
+  private readonly lastSavedTrim = signal<string>('');
+  private readonly hydratedKey = signal<string | null>(null);
+  readonly currentTrim = computed(() => this.draftText().trim());
+
+  private lastSavePromise: Promise<void> = Promise.resolve();
 
   readonly hasChanges = computed(() => {
+    const d = this.detail();
     const trim = this.currentTrim();
-    if (this.detailMode() === 'create') return trim.length > 0;
-    return trim.length > 0 && trim !== this.lastSavedTrim();
+
+    if (d.kind === 'create') return trim.length > 0;
+    if (d.kind === 'edit') return trim !== this.lastSavedTrim();
+    return false;
   });
 
-  readonly textDraft = signal('');
   constructor() {
+    this.textCtrl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((v) => this.draftText.set((v ?? '').toString()));
 
-  this.textCtrl.valueChanges
-  .pipe(takeUntilDestroyed(this.destroyRef))
-  .subscribe(v => this.textDraft.set(v));
     effect(() => {
-      if (!this.isDetailOpen()) return;
+      const d = this.detail();
 
-      if (this.detailMode() === 'create') {
-        this.hydratedId.set('create');
-        this.textDraft.set('');
-        this.editorForm.reset({ text: '' }, { emitEvent: false });
-        this.lastSavedTrim.set('');
-        this.closing.set(false);
+      if (d.kind === 'closed') return;
+
+      if (d.kind === 'create') {
+        this.hydrateCreate();
         return;
       }
 
-      const id = this.openedId();
+      // edit
       const note = this.openedNote();
-      if (!id || !note) return;
-
-      if (this.hydratedId() === id) return;
-      this.hydratedId.set(id);
-
-      const text = (note.text ?? '').toString();
-      this.textDraft.set(text);
-      this.editorForm.reset({ text }, { emitEvent: false });
-      this.lastSavedTrim.set(text.trim());
-      this.closing.set(false);
+      if (!note) return;
+      this.hydrateEdit(d.id, note);
     });
 
-    // autosave only for edit mode
-    this.editorForm.controls.text.valueChanges
+    toObservable(this.detail)
       .pipe(
-        map((v) => (v ?? '').toString()),
-        debounceTime(450),
-        distinctUntilChanged(),
-        filter(() => this.isDetailOpen() && this.isEditMode() && !!this.openedId()),
-        map((v) => v.trim()),
-        filter((trimmed) => trimmed !== this.lastSavedTrim()),
-        switchMap((trimmed) => {
-          const id = this.openedId();
-          if (!id) return EMPTY;
+        switchMap((d) => {
+          if (d.kind !== 'edit') return EMPTY;
 
-          this.saving.set(true);
-          return from(this.notesService.update(id, trimmed)).pipe(
-            tap(() => this.lastSavedTrim.set(trimmed)),
-            finalize(() => this.saving.set(false)),
-            catchError(() => {
-              this.saving.set(false);
-              return EMPTY;
-            })
+          return this.textCtrl.valueChanges.pipe(
+            map((v) => (v ?? '').toString()),
+            debounceTime(450),
+            distinctUntilChanged(),
+            map((v) => v.trim()),
+            filter((trim) => trim !== this.lastSavedTrim()),
+            switchMap((trim) =>
+              from(this.queueSave(async () => {
+                await this.notesService.update(d.id, trim);
+                this.lastSavedTrim.set(trim);
+              })).pipe(
+                catchError(() => EMPTY)
+              )
+            )
           );
         }),
         takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe();
+      ).subscribe();
 
-    // if note disappears while open (например удалили) -> закрыть
     effect(() => {
-      if (!this.isDetailOpen()) return;
+      const d = this.detail();
+      if (d.kind !== 'edit') return;
 
-      if (
-        this.isEditMode() &&
-        this.openedId() &&
-        !this.openedNote() &&
-        !this.closing() &&
-        !this.deleting()
-      ) {
+      if (!this.openedNote() && !this.closing() && !this.deleting()) {
         void this.close(false);
       }
     });
-
-    // safety: flush on destroy
     this.destroyRef.onDestroy(() => void this.flushSave());
   }
 
-  // ===== OPENERS =====
+  // ========= OPENERS =========
 
-  openNew() {
+  openNew(): void {
     if (!this.inPair()) return;
     if (this.isDetailOpen()) return;
 
-    this.detailMode.set('create');
-    this.openedId.set(null);
+    this.detail.set({ kind: 'create' });
     this.closing.set(false);
   }
 
-  openExisting(id: string) {
+  openExisting(id: string): void {
     if (!this.inPair()) return;
     if (this.isDetailOpen()) return;
 
-    const note = (this.notes() ?? []).find((n) => n.id === id);
-    if (!note) return;
+    const exists = (this.notes() ?? []).some((n) => n.id === id);
+    if (!exists) return;
 
-    this.detailMode.set('edit');
-    this.openedId.set(id);
+    this.detail.set({ kind: 'edit', id });
     this.closing.set(false);
   }
 
-  // ===== ACTIONS =====
+  // ========= ACTIONS =========
 
-  async back() {
+  async back(): Promise<void> {
     await this.close(true);
   }
 
-  async deleteCurrent() {
-    if (!this.isEditMode()) return;
-    const id = this.openedId();
-    if (!id) return;
+  async deleteCurrent(): Promise<void> {
+    const d = this.detail();
+    if (d.kind !== 'edit') return;
 
+    const id = d.id;
     this.deleting.set(true);
 
-    this.closing.set(true);
-    await new Promise((r) => setTimeout(r, 200));
-    this.resetDetailState();
-
     try {
+      await this.close(true);
       await this.notesService.remove(id);
     } finally {
       this.deleting.set(false);
     }
   }
 
+  // ========= INTERNAL =========
 
-  private async close(animate: boolean) {
+  private hydrateCreate(): void {
+    const key = 'create';
+    if (this.hydratedKey() === key) return;
+
+    this.hydratedKey.set(key);
+    this.lastSavedTrim.set('');
+    this.closing.set(false);
+    this.setEditorText('');
+  }
+
+  private hydrateEdit(id: string, note: Note): void {
+    if (this.hydratedKey() === id) return;
+
+    this.hydratedKey.set(id);
+
+    const text = (note.text ?? '').toString();
+    this.lastSavedTrim.set(text.trim());
+    this.closing.set(false);
+    this.setEditorText(text);
+  }
+
+  private setEditorText(text: string): void {
+    this.draftText.set(text);
+    this.textCtrl.setValue(text, { emitEvent: false });
+
+    this.editorForm.markAsPristine();
+    this.editorForm.markAsUntouched();
+  }
+
+  private async close(animate: boolean): Promise<void> {
     await this.flushSave();
 
     if (animate) {
       this.closing.set(true);
-      await new Promise((r) => setTimeout(r, 200));
+      await new Promise((r) => setTimeout(r, this.closeAnimMs));
     }
 
     this.resetDetailState();
   }
 
-  private resetDetailState() {
-    this.hydratedId.set(null);
+  private resetDetailState(): void {
+    this.hydratedKey.set(null);
     this.closing.set(false);
-    this.detailMode.set('edit');
-    this.openedId.set(null);
+    this.detail.set({ kind: 'closed' });
   }
 
-  private async flushSave() {
-    const textTrim = (this.editorForm.controls.text.value ?? '').toString().trim();
+  private queueSave(op: () => Promise<void>): Promise<void> {
+    const run = async () => {
+      this.saving.set(true);
+      try {
+        await op();
+      } finally {
+        this.saving.set(false);
+      }
+    };
 
-    // CREATE: create on close if user typed anything
-    if (this.detailMode() === 'create') {
-      if (textTrim.length === 0) return;
-      await this.notesService.add(textTrim);
+    this.lastSavePromise = this.lastSavePromise
+      .catch(() => undefined)
+      .then(run);
+
+    return this.lastSavePromise;
+  }
+
+  private async flushSave(): Promise<void> {
+    await this.lastSavePromise.catch(() => undefined);
+
+    const d = this.detail();
+    if (d.kind === 'closed') return;
+
+    const trim = (this.textCtrl.value ?? '').toString().trim();
+
+    if (d.kind === 'create') {
+      if (trim.length === 0) return;
+
+      try {
+        await this.queueSave(async () => {
+          await this.notesService.add(trim);
+        });
+      } catch {
+      }
+
       return;
     }
 
-    // EDIT: update on close if changed
-    const id = this.openedId();
-    if (!id) return;
-
-    if (textTrim === this.lastSavedTrim()) return;
+    // edit
+    if (trim === this.lastSavedTrim()) return;
 
     try {
-      this.saving.set(true);
-      await this.notesService.update(id, textTrim);
-      this.lastSavedTrim.set(textTrim);
-    } finally {
-      this.saving.set(false);
+      await this.queueSave(async () => {
+        await this.notesService.update(d.id, trim);
+        this.lastSavedTrim.set(trim);
+      });
+    } catch {
+      // тихо
     }
-  }
-
-  private hashToIndex(seed: string, mod: number): number {
-    let h = 0;
-    for (let i = 0; i < seed.length; i++) {
-      h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-    }
-    return h % mod;
   }
 
   noteColorClass(_: Note, index: number): string {
     return `note--${index % this.paletteSize}`;
   }
-
 }

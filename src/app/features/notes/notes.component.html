@@ -7,7 +7,7 @@
           <h1 class="page-header__h1">Заметки</h1>
           <span class="page-header__count">( {{ notesCount() }} )</span>
         </div>
-    
+
         <div class="page-header__actions">
           @if (inPair()) {
             <ui-button
@@ -80,7 +80,6 @@
         }
       </div>
 
-
       @if (isEditMode() && openedNote(); as note) {
         <h1 class="detail-meta">Редактирование</h1>
 
@@ -98,7 +97,6 @@
         <h1 class="detail-meta">Новая заметка</h1>
       }
 
-
       <form class="detail-body" [formGroup]="editorForm">
         <div class="editor-card">
           <textarea
@@ -109,7 +107,6 @@
           </textarea>
         </div>
       </form>
-
     </div>
   }
 </section>
