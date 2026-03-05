@@ -10,61 +10,31 @@
   <div class="card">
     <!-- Статус и период -->
     <div class="section">
-      <h2 class="section-title">Статус отчёта</h2>
-
       <p class="status">{{ statusText() }}</p>
 
       @if (periodText()) {
         <div class="meta-line">
-          <span class="label-inline">Период отчёта:</span>
+          <p class="status">Отчет за:</p>
           <span>{{ periodText() }}</span>
         </div>
       }
-
-      <div class="hint vpn-hint">
-        Важно: для генерации отчёта включите VPN (запрос к LLM работает только через VPN).
-      </div>
     </div>
 
-    <!-- Действия -->
+    @if (loading()) {
     <div class="section">
-      <h2 class="section-title">Действия</h2>
-
-      <div class="actions-grid">
-        <ui-button
-          class="ui-btn--h56 ui-btn--no-dim"
-          [full]="true"
-          variant="primary"
-          type="button"
-          [disabled]="loading() || !canGenerate()"
-          [loading]="loading()"
-          (click)="generate()">
-          СФОРМИРОВАТЬ ОТЧЁТ
-        </ui-button>
-
-        <ui-button
-          class="ui-btn--h56 ui-btn--no-dim"
-          [full]="true"
-          variant="outline"
-          type="button"
-          [disabled]="loading() || !canGet()"
-          (click)="getReport()">
-          ПОЛУЧИТЬ ОТЧЁТ
-        </ui-button>
-      </div>
-
-      @if (loading()) {
         <div class="hint">Генерация отчёта…</div>
-      }
     </div>
+  }
 
     <!-- Ошибки -->
     @if (uiError()) {
       <div class="form-error" role="alert">{{ uiError() }}</div>
     }
 
-    @if (report()?.status === 'error') {
-      <div class="form-error" role="alert">{{ report()?.error }}</div>
+    @if ((target() === 'current' ? report() : previousReport())?.status === 'error') {
+      <div class="form-error" role="alert">
+        {{ (target() === 'current' ? report() : previousReport())?.error }}
+      </div>
     }
 
     <!-- Текст отчёта -->

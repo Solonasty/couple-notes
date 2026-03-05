@@ -28,7 +28,6 @@ import {
   updateDoc,
   serverTimestamp,
   type DocumentReference,
-  type FieldValue,
   type WithFieldValue,
   type UpdateData,
 } from 'firebase/firestore';
@@ -37,22 +36,31 @@ import { AuthService } from './auth.service';
 import { PairContextService } from './pair-context.service';
 import { SummaryService } from './summary.service';
 import { Note } from '../models/note.type';
-import {  ReportDoc, ReportSourceNote } from '../models/report-doc.type';
-
+import { ReportDoc, ReportSourceNote } from '../models/report-doc.type';
 import { Schedule } from '../models/schedule.type';
 
-// const REPORT_PERIOD_OVERRIDE: { startISO: string; endISO: string } | null = {
-//   startISO: '2026-02-06T18:00:00+03:00',
-//   endISO: '2026-02-13T18:00:00+03:00',
+// const REPORT_PERIOD_OVERRIDE_CURRENT: { startISO: string; endISO: string } | null = {
+//   startISO: '2026-03-02T14:45:00+03:00',
+//   endISO: '2026-03-02T14:48:00+03:00',
+// };
+// const REPORT_PERIOD_OVERRIDE_PREVIOUS: { startISO: string; endISO: string } | null = {
+//   startISO: '2026-02-11T18:00:00+03:00',
+//   endISO: '2026-03-02T14:45:00+03:00',
 // };
 
-const REPORT_PERIOD_OVERRIDE: { startISO: string; endISO: string } | null = {
-  startISO: '2026-02-11T18:00:00+03:00',
-  endISO: '2026-03-02T14:48:00+03:00',
-};
-// const REPORT_PERIOD_OVERRIDE: { startISO: string; endISO: string } | null = null;
+type PeriodOverride = { startISO: string; endISO: string } | null;
+const REPORT_PERIOD_OVERRIDE_CURRENT: PeriodOverride = null;
+const REPORT_PERIOD_OVERRIDE_PREVIOUS: PeriodOverride = null;
 
 const REPORT_SHIFT_WEEKS = 0;
+
+export type ReportTarget = 'current' | 'previous';
+
+type Period = {
+  slotStart: Date | null;
+  slotEnd: Date | null;
+  reportId: string | null;
+};
 
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
@@ -61,7 +69,7 @@ export class ReportsService {
   private pairCtx = inject(PairContextService);
   private summary = inject(SummaryService);
 
-  /** обновляем раз в минуту */
+  /** обновляем раз в ~90 секунд */
   readonly schedule$: Observable<Schedule> = combineLatest([
     this.auth.user$,
     this.pairCtx.activePair$,
@@ -70,7 +78,7 @@ export class ReportsService {
     map(([user, pair]) => {
       const now = new Date();
 
-      const { slotStart, slotEnd, nextAt, msToNext, due } = computePeriod(now);
+      const { slotStart, slotEnd, nextAt, msToNext, due } = computeCurrentPeriod(now);
       const reportId =
         slotStart && slotEnd ? reportIdFromPeriod(slotStart, slotEnd) : null;
 
@@ -103,20 +111,20 @@ export class ReportsService {
     shareReplay({ bufferSize: 1, refCount: true })
   );
 
+  /** Текущий отчёт (для текущего периода schedule.slotStart/slotEnd) */
   readonly report$: Observable<ReportDoc | null> = this.schedule$.pipe(
     switchMap((s) => {
-      if (!s.inPair || !s.pairId || !s.reportId) return of(null);
+      if (!s.inPair || !s.pairId) return of(null);
+
+      const p = this.periodFor('current', s);
+      if (!p.reportId) return of(null);
 
       const ref = doc(
         this.fs,
-        `pairs/${s.pairId}/reports/${s.reportId}`
+        `pairs/${s.pairId}/reports/${p.reportId}`
       ) as unknown as DocumentReference<ReportDoc>;
 
-      // docData(idField:'id') требует, чтобы key существовал в типе
-      const refWithId =
-        ref as unknown as DocumentReference<ReportDoc>;
-
-      return docData(refWithId, { idField: 'id' }).pipe(
+      return docData(ref, { idField: 'id' }).pipe(
         map((d) => (d ? (d as unknown as ReportDoc) : null)),
         catchError(() => of(null))
       );
@@ -124,24 +132,79 @@ export class ReportsService {
     shareReplay({ bufferSize: 1, refCount: true })
   );
 
-  async generateWeekly(): Promise<void> {
+  /** Отчёт за предыдущий период */
+  readonly previousReport$: Observable<ReportDoc | null> = this.schedule$.pipe(
+    switchMap((s) => {
+      if (!s.inPair || !s.pairId) return of(null);
+
+      const p = this.periodFor('previous', s);
+      if (!p.reportId) return of(null);
+
+      const ref = doc(
+        this.fs,
+        `pairs/${s.pairId}/reports/${p.reportId}`
+      ) as unknown as DocumentReference<ReportDoc>;
+
+      return docData(ref, { idField: 'id' }).pipe(
+        map((d) => (d ? (d as unknown as ReportDoc) : null)),
+        catchError(() => of(null))
+      );
+    }),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
+
+
+  periodFor(target: ReportTarget, s: Schedule): Period {
+    if (!s.inPair) {
+      return { slotStart: null, slotEnd: null, reportId: null };
+    }
+
+    if (target === 'current') {
+      if (!s.slotStart || !s.slotEnd || !s.reportId) {
+        return { slotStart: null, slotEnd: null, reportId: null };
+      }
+      return { slotStart: s.slotStart, slotEnd: s.slotEnd, reportId: s.reportId };
+    }
+
+    // previous
+    const prev = computePreviousPeriodFromSchedule(s);
+    if (!prev.slotStart || !prev.slotEnd) return { slotStart: null, slotEnd: null, reportId: null };
+
+    return {
+      slotStart: prev.slotStart,
+      slotEnd: prev.slotEnd,
+      reportId: reportIdFromPeriod(prev.slotStart, prev.slotEnd),
+    };
+  }
+
+  /**
+   * Генерация:
+   * - current: можно только когда schedule.due === true
+   * - previous: можно всегда (если в паре), используем прошлый период
+   */
+  async generateWeekly(target: ReportTarget = 'current'): Promise<void> {
     const s = await firstValueFrom(this.schedule$.pipe(take(1)));
 
-    if (!s.inPair || !s.pairId || !s.uid || !s.slotStart || !s.slotEnd || !s.reportId) {
+    if (!s.inPair || !s.pairId || !s.uid) {
       throw new Error('NOT_IN_PAIR');
     }
-    if (!s.due) {
+    if (target === 'current' && !s.due) {
       throw new Error('NOT_DUE_YET');
     }
 
-    // теперь типы точно string/Date
+    const period = this.periodFor(target, s);
+    if (!period.slotStart || !period.slotEnd || !period.reportId) {
+      throw new Error('NO_PERIOD');
+    }
+
     const uid = s.uid;
-    const slotStart = s.slotStart;
-    const slotEnd = s.slotEnd;
+    const slotStart = period.slotStart;
+    const slotEnd = period.slotEnd;
+    const reportId = period.reportId;
 
     const reportRef = doc(
       this.fs,
-      `pairs/${s.pairId}/reports/${s.reportId}`
+      `pairs/${s.pairId}/reports/${reportId}`
     ) as unknown as DocumentReference<ReportDoc>;
 
     let shouldGenerate = false;
@@ -191,7 +254,6 @@ export class ReportsService {
         ...(d.data() as Omit<Note, 'id'>),
       })) as Note[];
 
-
       const sourceNotes: ReportSourceNote[] = notes.slice(0, 200).map((n) => ({
         id: n.id,
         text: (n.text ?? '').slice(0, 2000),
@@ -229,23 +291,23 @@ export class ReportsService {
 
 // =================== helpers ===================
 
-function computePeriod(now: Date): {
+function computeCurrentPeriod(now: Date): {
   slotStart: Date | null;
   slotEnd: Date | null;
   nextAt: Date | null;
   msToNext: number | null;
   due: boolean;
 } {
-  // ручной период
-  if (REPORT_PERIOD_OVERRIDE) {
-    const slotStart = new Date(REPORT_PERIOD_OVERRIDE.startISO);
-    const slotEnd = new Date(REPORT_PERIOD_OVERRIDE.endISO);
+  // ручной период (CURRENT)
+  if (REPORT_PERIOD_OVERRIDE_CURRENT) {
+    const slotStart = new Date(REPORT_PERIOD_OVERRIDE_CURRENT.startISO);
+    const slotEnd = new Date(REPORT_PERIOD_OVERRIDE_CURRENT.endISO);
 
     if (isNaN(slotStart.getTime()) || isNaN(slotEnd.getTime())) {
-      throw new Error('REPORT_PERIOD_OVERRIDE invalid ISO');
+      throw new Error('REPORT_PERIOD_OVERRIDE_CURRENT invalid ISO');
     }
     if (slotStart.getTime() >= slotEnd.getTime()) {
-      throw new Error('REPORT_PERIOD_OVERRIDE: start must be < end');
+      throw new Error('REPORT_PERIOD_OVERRIDE_CURRENT: start must be < end');
     }
 
     const nextAt = slotEnd;
@@ -268,6 +330,30 @@ function computePeriod(now: Date): {
   return { slotStart, slotEnd, nextAt, msToNext, due };
 }
 
+function computePreviousPeriodFromSchedule(s: Schedule): { slotStart: Date | null; slotEnd: Date | null } {
+  // ручной период (PREVIOUS)
+  if (REPORT_PERIOD_OVERRIDE_PREVIOUS) {
+    const slotStart = new Date(REPORT_PERIOD_OVERRIDE_PREVIOUS.startISO);
+    const slotEnd = new Date(REPORT_PERIOD_OVERRIDE_PREVIOUS.endISO);
+
+    if (isNaN(slotStart.getTime()) || isNaN(slotEnd.getTime())) {
+      throw new Error('REPORT_PERIOD_OVERRIDE_PREVIOUS invalid ISO');
+    }
+    if (slotStart.getTime() >= slotEnd.getTime()) {
+      throw new Error('REPORT_PERIOD_OVERRIDE_PREVIOUS: start must be < end');
+    }
+
+    return { slotStart, slotEnd };
+  }
+
+  // по умолчанию: предыдущая неделя (slotStart-7д .. slotStart)
+  if (!s.slotStart) return { slotStart: null, slotEnd: null };
+
+  const slotEnd = new Date(s.slotStart);
+  const slotStart = addDays(slotEnd, -7);
+  return { slotStart, slotEnd };
+}
+
 function addDays(d: Date, days: number) {
   const x = new Date(d);
   x.setDate(x.getDate() + days);
@@ -286,7 +372,7 @@ function fmtId(d: Date) {
 
 /** reportId зависит от start+end, чтобы при ручных периодах не было коллизий */
 function reportIdFromPeriod(start: Date, end: Date) {
-  return `report_${fmtId(start)}__${fmtId(end)}`;
+  return `report_${fmtId(start)}_${fmtId(end)}`;
 }
 
 /**
