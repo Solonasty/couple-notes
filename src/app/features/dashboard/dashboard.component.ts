@@ -1,17 +1,14 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
-import { AuthService } from '../../core/services/auth.service';
+import { AuthService } from '../../core/guards/auth.service';
 import { Firestore, doc, setDoc, serverTimestamp } from '@angular/fire/firestore';
-
 import {
   EmailAuthProvider,
   reauthenticateWithCredential,
   updatePassword,
 } from 'firebase/auth';
-
-import { UiButtonComponent, UiIconComponent, UiInputComponent } from '@/app/ui';
+import { UiButtonComponent, UiInputComponent } from '@/app/ui';
 
 @Component({
   standalone: true,
@@ -44,7 +41,7 @@ export class DashboardComponent {
 
   readonly greetingTitle = computed(() => {
     const name = this.profile()?.name?.trim();
-  
+
     if (!name) return 'Привет 👋';
     const firstName = name.split(/\s+/)[0];
     return `Привет, ${firstName}`;

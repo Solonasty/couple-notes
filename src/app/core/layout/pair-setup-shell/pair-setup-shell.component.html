@@ -1,0 +1,34 @@
+<!-- <mat-sidenav-container class="container">
+
+  <mat-sidenav
+  #drawer
+  class="sidenav"
+  [class.sidenav--mobile]="isMobile()"
+  [mode]="isMobile() ? 'over' : 'side'"
+  [opened]="!isMobile()"
+  [fixedInViewport]="isMobile()">
+  </mat-sidenav> -->
+
+  <!-- <mat-sidenav-content> -->
+    <mat-toolbar color="primary" class="toolbar">
+      <!-- @if (isMobile()) { -->
+          <div class="account">
+              <div class="avatar">{{ initials() }}</div>
+              <div class="account-text">
+                  <div class="account-name">{{ accountName() }}</div>
+              </div>
+          </div>
+
+          <button mat-icon-button class="logout-btn" (click)="logout()" aria-label="Выйти">
+              <ui-icon name="logout" size="lg"></ui-icon>
+          </button>
+      <!-- } -->
+    </mat-toolbar>
+
+    <main class="content" [class.content--mobile]="isMobile()">
+      <router-outlet />
+    </main>
+
+  <!-- </mat-sidenav-content> -->
+
+<!-- </mat-sidenav-container> -->

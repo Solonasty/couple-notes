@@ -50,7 +50,7 @@
 
     <mat-sidenav-content>
         <mat-toolbar color="primary" class="toolbar">
-            @if (isMobile()) {
+            <!-- @if (isMobile()) { -->
                 <div class="account">
                     <div class="avatar">{{ initials() }}</div>
                     <div class="account-text">
@@ -61,7 +61,7 @@
                 <button mat-icon-button class="logout-btn" (click)="logout()" aria-label="Выйти">
                     <ui-icon name="logout" size="lg"></ui-icon>
                 </button>
-            }
+            <!-- } -->
         </mat-toolbar>
 
         <main class="content" [class.content--mobile]="isMobile()">

@@ -1,0 +1,41 @@
+<div class="page">
+  <h1 class="title">Присоединиться</h1>
+  <p class="subtitle">
+    Введите код, который видите у партнёра.
+  </p>
+
+  <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+    <ui-input
+      formControlName="code"
+      type="text"
+      placeholder="Код (например ZNEQQW)"
+      autocomplete="one-time-code">
+    </ui-input>
+
+    @if (error()) {
+      <div class="form-error" role="alert">{{ error() }}</div>
+    }
+
+    <div class="actions">
+      <ui-button
+        class="ui-btn--h56 ui-btn--no-dim"
+        [full]="true"
+        variant="primary"
+        type="submit"
+        [disabled]="form.invalid || loading()"
+        [loading]="loading()">
+        Присоединиться
+      </ui-button>
+
+      <ui-button
+        class="ui-btn--h56 ui-btn--no-dim"
+        [full]="true"
+        variant="outline"
+        type="button"
+        routerLink="/app/pair-setup"
+        [disabled]="loading()">
+        Назад
+      </ui-button>
+    </div>
+  </form>
+</div>

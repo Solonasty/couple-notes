@@ -1,0 +1,22 @@
+<div class="page">
+  @if (!hasPair()) {
+    <h1 class="title">Подключаем…</h1>
+    <p class="subtitle">
+      Мы создаём пару и синхронизируем профиль. Обычно это занимает пару секунд.
+    </p>
+  } @else {
+    <h1 class="title">Готово ✅</h1>
+    <p class="subtitle">Открываем приложение…</p>
+  }
+
+  <div class="actions">
+    <ui-button
+      class="ui-btn--h56 ui-btn--no-dim"
+      [full]="true"
+      variant="outline"
+      type="button"
+      routerLink="/app/pair-setup">
+      Вернуться
+    </ui-button>
+  </div>
+</div>

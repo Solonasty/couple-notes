@@ -8,20 +8,20 @@
   </div>
 
   <div class="card">
-    <!-- Статус пары -->
     <div class="section">
       <h2 class="section-title">Ваша пара</h2>
 
-      @if (myProfile()?.pairId) {
+      @if (profile()?.pairId) {
         <div class="pair-block">
           <div class="pair-meta">
-            <div class="value">{{ myProfile()?.partnerEmail ?? myProfile()?.partnerUid }}</div>
+            <div class="label">Партнёр</div>
+            <div class="value">{{ partnerLabel() }}</div>
           </div>
 
           <ui-button
             class="ui-btn--h56 ui-btn--no-dim"
             [full]="true"
-            variant="outline"
+            variant="danger"
             type="button"
             [disabled]="saving()"
             [loading]="saving()"
@@ -30,7 +30,7 @@
           </ui-button>
         </div>
       } @else {
-        <p class="muted">Вы пока не в паре</p>
+        <p class="muted">Пара не активна</p>
       }
     </div>
 
@@ -40,87 +40,6 @@
 
     @if (ok()) {
       <div class="form-ok" role="status">{{ ok() }}</div>
-    }
-
-    <!-- Отправленные приглашения -->
-    @if (outgoingInvites().length !== 0) {
-      <div class="section">
-        <h2 class="section-title">Отправленные приглашения</h2>
-          <div class="list-grid">
-            @for (inv of outgoingInvites(); track inv.id) {
-              <div class="row-card">
-                <div class="label">Кому</div>
-                <div class="value">{{ inv.toEmail }}</div>
-              </div>
-            }
-          </div>
-      </div>
-    }
-
-    <!-- Полученные приглашения -->
-    @if (incomingInvites().length !== 0) {
-      <div class="section">
-        <h2 class="section-title">Полученные приглашения</h2>
-          <div class="list-grid">
-            @for (inv of incomingInvites(); track inv.id) {
-              <div class="row-card row-card--interactive">
-                <div class="row-card__content">
-                  <div class="label">От</div>
-                  <div class="value">{{ inv.fromEmail }}</div>
-                </div>
-
-                <div class="actions-grid">
-                  <ui-button
-                    class="ui-btn--h48 ui-btn--no-dim"
-                    [full]="true"
-                    variant="primary"
-                    type="button"
-                    [disabled]="saving()"
-                    [loading]="saving()"
-                    (click)="acceptInvite(inv.id)">
-                    ПРИНЯТЬ
-                  </ui-button>
-
-                  <ui-button
-                    class="ui-btn--h48 ui-btn--no-dim"
-                    [full]="true"
-                    variant="danger"
-                    type="button"
-                    [disabled]="saving()"
-                    (click)="declineInvite(inv.id)">
-                    ОТКЛОНИТЬ
-                  </ui-button>
-                </div>
-              </div>
-            }
-          </div>
-      </div>
-    }
-
-    <!-- Форма приглашения -->
-    @if (canShowInviteForm()) {
-      <div class="section">
-          <form class="form-block" [formGroup]="pairForm" (ngSubmit)="createInvite()">
-            <h2 class="section-title">Пригласить партнёра</h2>
-
-            <ui-input
-              formControlName="partnerEmail"
-              type="email"
-              placeholder="Email партнёра"
-              autocomplete="email">
-            </ui-input>
-
-            <ui-button
-              class="ui-btn--h56 ui-btn--no-dim"
-              [full]="true"
-              variant="primary"
-              type="submit"
-              [disabled]="pairForm.invalid || saving()"
-              [loading]="saving()">
-              ОТПРАВИТЬ ПРИГЛАШЕНИЕ
-            </ui-button>
-          </form>
-      </div>
     }
   </div>
 </div>

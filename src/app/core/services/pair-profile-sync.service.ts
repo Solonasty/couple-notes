@@ -11,7 +11,7 @@ import {
   distinctUntilChanged,
   take,
 } from 'rxjs';
-import { AuthService } from './auth.service';
+import { AuthService } from '../guards/auth.service';
 import { PairContextService } from './pair-context.service';
 import { User } from '../models/user.type';
 

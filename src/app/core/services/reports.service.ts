@@ -22,7 +22,6 @@ import {
   timer,
   catchError,
 } from 'rxjs';
-
 import {
   Timestamp,
   updateDoc,
@@ -31,8 +30,7 @@ import {
   type WithFieldValue,
   type UpdateData,
 } from 'firebase/firestore';
-
-import { AuthService } from './auth.service';
+import { AuthService } from '../guards/auth.service';
 import { PairContextService } from './pair-context.service';
 import { SummaryService } from './summary.service';
 import { Note } from '../models/note.type';

@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../core/services/auth.service';
+import { AuthService } from '../../core/guards/auth.service';
 import { Firestore, doc, setDoc, serverTimestamp } from '@angular/fire/firestore';
 import { UiButtonComponent, UiInputComponent, UiIconComponent } from '@/app/ui';
 
@@ -75,7 +75,7 @@ export class RegisterComponent {
         { merge: true }
       );
 
-      await this.router.navigateByUrl('/app/notes', { replaceUrl: true });
+      await this.router.navigateByUrl('/app', { replaceUrl: true });
     } catch (e: unknown) {
       this.error.set(e instanceof Error ? e.message : 'Ошибка регистрации');
     } finally {

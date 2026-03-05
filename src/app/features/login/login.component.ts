@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { AuthService } from '../../core/services/auth.service';
+import { AuthService } from '../../core/guards/auth.service';
 import { UiButtonComponent } from '@/app/ui/ui-button/ui-button.component';
 import { UiInputComponent } from '@/app/ui/ui-input/ui-input.component';
 
@@ -46,7 +46,7 @@ export class LoginComponent {
       const { email, password } = this.form.getRawValue();
       await this.auth.signIn(email, password);
 
-      await this.router.navigateByUrl('/app/notes', { replaceUrl: true });
+      await this.router.navigateByUrl('/app', { replaceUrl: true });
 
     } catch (e: unknown) {
       this.error.set(e instanceof Error ? e.message : 'Ошибка входа');

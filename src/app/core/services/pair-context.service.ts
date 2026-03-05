@@ -8,7 +8,7 @@ import {
   limit,
 } from '@angular/fire/firestore';
 import { Observable, of, switchMap, map, shareReplay } from 'rxjs';
-import { AuthService } from './auth.service';
+import { AuthService } from '../guards/auth.service';
 import { ActivePair, Pair } from '../models/pair.type';
 
 

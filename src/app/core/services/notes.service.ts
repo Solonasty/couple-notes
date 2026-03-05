@@ -25,8 +25,7 @@ import {
   filter,
   take,
 } from 'rxjs';
-
-import { AuthService } from './auth.service';
+import { AuthService } from '../guards/auth.service';
 import { PairContextService } from './pair-context.service';
 import { PairNotesCtx } from '../models/pair-note-ctx.type';
 import { Note } from '../models/note.type';

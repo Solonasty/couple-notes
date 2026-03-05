@@ -1,15 +1,11 @@
 import { signal } from '@angular/core';
 import { EMPTY, of } from 'rxjs';
-
 import { Firestore } from '@angular/fire/firestore';
-
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../guards/auth.service';
 import { PairContextService } from '../services/pair-context.service';
 import { ReportsService } from '../services/reports.service';
 import { PairProfileSyncService } from '../services/pair-profile-sync.service';
-
 import type { User, UserCredential } from 'firebase/auth';
-
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import {
   getFirestore,
