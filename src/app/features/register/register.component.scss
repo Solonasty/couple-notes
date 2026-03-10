@@ -1,6 +1,6 @@
 .page {
     min-height: 100dvh;
-    padding: 28px 20px;
+    padding: 26px;
     display: flex;
     flex-direction: column;
 }
@@ -19,7 +19,6 @@
     margin-top: auto;
     display: grid;
     gap: 12px;
-    padding-bottom: env(safe-area-inset-bottom);
 }
 
 .fields {

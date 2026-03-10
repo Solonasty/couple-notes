@@ -1,8 +1,6 @@
 <div class="page">
   <h1 class="title">Присоединиться</h1>
-  <p class="subtitle">
-    Введите код, который видите у партнёра.
-  </p>
+  <p class="subtitle">Введите код, который видите у партнёра.</p>
 
   <form class="form" [formGroup]="form" (ngSubmit)="submit()">
     <ui-input
@@ -24,7 +22,7 @@
         type="submit"
         [disabled]="form.invalid || loading()"
         [loading]="loading()">
-        Присоединиться
+        ПРИСОЕДЕНИТЬСЯ
       </ui-button>
 
       <ui-button
@@ -34,7 +32,7 @@
         type="button"
         routerLink="/app/pair-setup"
         [disabled]="loading()">
-        Назад
+        НАЗАД
       </ui-button>
     </div>
   </form>

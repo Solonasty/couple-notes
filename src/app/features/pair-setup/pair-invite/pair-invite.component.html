@@ -1,6 +1,6 @@
 <div class="page">
   <h1 class="title">Пригласить партнёра</h1>
-  <p class="subtitle">Партнёр вводит код в разделе “Присоединиться”.</p>
+  <p class="subtitle">Партнёр вводит код в разделе "Присоединиться".</p>
 
   @if (error()) {
     <div class="form-error" role="alert">{{ error() }}</div>
@@ -19,7 +19,7 @@
       type="button"
       (click)="copyCode()"
       [disabled]="!code()">
-      Скопировать код
+      СКОПИРОВАТЬ КОД
     </ui-button>
 
     <ui-button
@@ -30,7 +30,7 @@
       (click)="generate()"
       [disabled]="loading()"
       [loading]="loading()">
-      Сгенерировать новый код
+      СГЕНЕРИРОВАТЬ НОВЫЙ КОД
     </ui-button>
 
     <ui-button
@@ -39,7 +39,7 @@
       variant="outline"
       type="button"
       routerLink="/app/pair-setup">
-      Назад
+      НАЗАД
     </ui-button>
   </div>
 </div>
