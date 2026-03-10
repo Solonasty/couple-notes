@@ -1,0 +1,105 @@
+:host {
+  display: block;
+}
+
+.pair-progress {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.pair-progress__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pair-progress__caption {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  padding-bottom: 16px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.pair-progress__bar {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mat-sys-outline-variant) 55%, transparent);
+  overflow: hidden;
+}
+
+.pair-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--mat-sys-primary);
+  transition: width 240ms ease;
+}
+
+.pair-progress__steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.pair-progress__step {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.pair-progress__dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--mat-sys-outline-variant) 45%, transparent);
+  color: var(--mat-sys-on-surface-variant);
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    transform 200ms ease,
+    border-color 200ms ease;
+}
+
+.pair-progress__label {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--mat-sys-on-surface-variant);
+  transition: color 200ms ease;
+}
+
+.pair-progress__step.is-reached .pair-progress__dot {
+  background: color-mix(in srgb, var(--mat-sys-primary) 16%, transparent);
+  color: var(--mat-sys-primary);
+}
+
+.pair-progress__step.is-active .pair-progress__dot {
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+  transform: scale(1.04);
+}
+
+.pair-progress__step.is-reached .pair-progress__label {
+  color: var(--mat-sys-on-surface);
+}
+
+.pair-progress__step.is-active .pair-progress__label {
+  font-weight: 600;
+}
+
+@media (max-width: 420px) {
+  .pair-progress__label {
+    font-size: 11px;
+  }
+
+  .pair-progress__steps {
+    gap: 8px;
+  }
+}

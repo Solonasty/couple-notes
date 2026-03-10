@@ -1,6 +1,9 @@
 <div class="page">
-  <h1 class="title">Присоединиться</h1>
-  <p class="subtitle">Введите код, который видите у партнёра.</p>
+
+  <app-pair-setup-progress [currentStep]="2" [currentStepLabel]="'Введите код'"></app-pair-setup-progress>
+
+  <p class="subtitle">Введите код, который прислал вам партнёр.
+    После этого вы подключитесь к паре.</p>
 
   <form class="form" [formGroup]="form" (ngSubmit)="submit()">
     <ui-input

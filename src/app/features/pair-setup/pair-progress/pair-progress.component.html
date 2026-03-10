@@ -1,0 +1,34 @@
+<div class="pair-progress" aria-label="Прогресс подключения пары">
+  <div class="pair-progress__top">
+    <span class="pair-progress__caption">
+      Шаг {{ currentStep() }} из {{ totalSteps }}: {{ currentStepLabel() }}
+    </span>
+  </div>
+
+  <div class="pair-progress__bar" aria-hidden="true">
+    <div
+      class="pair-progress__fill"
+      [style.width.%]="progressPercent()">
+    </div>
+  </div>
+
+  <div class="pair-progress__steps">
+    @for (step of steps; track step) {
+      <div
+        class="pair-progress__step"
+        [ngClass]="{
+          'is-reached': currentStep() >= step,
+          'is-active': currentStep() === step,
+          'is-completed': currentStep() > step
+        }">
+        <div class="pair-progress__dot">
+          @if (currentStep() > step) {
+            <span>✓</span>
+          } @else {
+            <span>{{ step }}</span>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

@@ -34,8 +34,9 @@ h3 {
 }
 
 p {
-  font: var(--mat-sys-body-medium);
   letter-spacing: var(--mat-sys-body-medium-tracking);
+  opacity: 0.8;
+  line-height: 1.35;
 }
 
 small {

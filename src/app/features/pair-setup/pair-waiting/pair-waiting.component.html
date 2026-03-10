@@ -1,10 +1,13 @@
 <div class="page">
+
+  <app-pair-setup-progress [currentStep]="3" [currentStepLabel]="'Создание пары'"></app-pair-setup-progress>
+
   @if (!hasPair()) {
-    <h1 class="title">Подключаем…</h1>
-    <p class="subtitle">Мы создаём пару и синхронизируем профиль. Обычно это занимает пару секунд.</p>
+    <p class="subtitle">Мы связываем ваши аккаунты и открываем доступ к общим заметкам и еженедельному отчёту.
+      Это обычно занимает несколько секунд.</p>
   } @else {
-    <h1 class="title">Готово ✅</h1>
-    <p class="subtitle">Открываем приложение…</p>
+    <h1 class="title">Пара создана ✅</h1>
+    <p class="subtitle">Всё готово — открываем общие заметки и остальные функции приложения.</p>
   }
 
   <div class="actions">

@@ -1,6 +1,10 @@
 <div class="page">
-  <h1 class="title">Подключите партнёра</h1>
-  <p class="subtitle">Чтобы открыть заметки и остальные функции, нужно создать пару.</p>
+
+  <app-pair-setup-progress [currentStep]="1" [currentStepLabel]="'Подключите партнёра'"></app-pair-setup-progress>
+
+  <p class="subtitle">Добро пожаловать - теперь вы с нами 🎉</p>
+  <p class="subtitle">Осталось совсем немного: подключить партнёра любым удобным для вас способом. Отправьте свой код или введите код, который получили от партнера.</p>
+  <p class="subtitle">После этого вы сможете пользоваться общими заметками и другими функциями приложения!</p>
 
   <div class="actions">
     <ui-button
@@ -9,7 +13,7 @@
       variant="primary"
       type="button"
       routerLink="/app/pair-setup/invite">
-      ПРИГЛАСИТЬ ПАРТНЕРА
+      ОТПРАВИТЬ СВОЙ КОД
     </ui-button>
 
     <ui-button
@@ -18,7 +22,7 @@
       variant="outline"
       type="button"
       routerLink="/app/pair-setup/join">
-      ПРИСОЕДЕНИТЬСЯ ПО КОДУ
+      ВВЕСТИ КОД ПАРТНЁРА
     </ui-button>
   </div>
 </div>

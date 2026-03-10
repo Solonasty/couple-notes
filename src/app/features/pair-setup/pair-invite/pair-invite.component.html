@@ -1,27 +1,35 @@
 <div class="page">
-  <h1 class="title">Пригласить партнёра</h1>
-  <p class="subtitle">Партнёр вводит код в разделе "Присоединиться".</p>
+  <app-pair-setup-progress [currentStep]="2" [currentStepLabel]="'Отправьте код партнёру'"></app-pair-setup-progress>
+
+  <p class="subtitle">
+    Нажмите на код, чтобы скопировать его и отправьте его партнёру.
+    Когда партнёр введёт код у себя, пара создастся автоматически.
+  </p>
 
   @if (error()) {
     <div class="form-error" role="alert">{{ error() }}</div>
   }
 
-  <div class="card">
-    <div class="code">{{ code() ?? '—' }}</div>
+  <div class="code">
+    <button
+      class="code code-button"
+      type="button"
+      (click)="copyCode()"
+      [disabled]="!code()"
+      aria-label="Скопировать код приглашения">
+      {{ code() ?? '—' }}
+    </button>
+
+    @if (copied()) {
+      <div class="copy-notice" role="status" aria-live="polite">
+        Скопировано!
+      </div>
+    }
+
     <div class="status">{{ statusText() }}</div>
   </div>
 
   <div class="actions">
-    <ui-button
-      class="ui-btn--h56 ui-btn--no-dim"
-      [full]="true"
-      variant="primary"
-      type="button"
-      (click)="copyCode()"
-      [disabled]="!code()">
-      СКОПИРОВАТЬ КОД
-    </ui-button>
-
     <ui-button
       class="ui-btn--h56 ui-btn--no-dim"
       [full]="true"

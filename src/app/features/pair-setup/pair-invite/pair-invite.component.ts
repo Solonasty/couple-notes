@@ -1,14 +1,15 @@
-import { Component, inject, signal, effect, DestroyRef } from '@angular/core';
+import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PairCodeInvite } from '@/app/core/models/pair-code-invite.type';
 import { UiButtonComponent } from '@/app/ui';
 import { PairCodeService } from '@/app/core/guards/pair-code.service';
+import { PairProgressComponent } from '../pair-progress/pair-progress.component';
 
 @Component({
   standalone: true,
   selector: 'app-pair-invite',
-  imports: [RouterLink, UiButtonComponent],
+  imports: [RouterLink, UiButtonComponent, PairProgressComponent],
   templateUrl: './pair-invite.component.html',
   styleUrl: './pair-invite.component.scss',
 })
@@ -18,24 +19,32 @@ export class PairInviteComponent {
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly copied = signal(false);
 
   readonly code = signal<string | null>(null);
   readonly invite = signal<PairCodeInvite | null>(null);
 
+  private copiedTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor() {
     void this.generate();
 
-    effect(() => {
+    this.destroyRef.onDestroy(() => {
+      if (this.copiedTimer) {
+        clearTimeout(this.copiedTimer);
+      }
+    });
+
+    effect((onCleanup) => {
       const c = this.code();
       if (!c) return;
 
-      this.pairCode
-        .watchInvite(c)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: (inv) => this.invite.set(inv ?? null),
-          error: () => this.error.set('Не удалось получить состояние кода'),
-        });
+      const sub = this.pairCode.watchInvite(c).subscribe({
+        next: (inv) => this.invite.set(inv ?? null),
+        error: () => this.error.set('Не удалось получить состояние кода'),
+      });
+
+      onCleanup(() => sub.unsubscribe());
     });
   }
 
@@ -43,6 +52,7 @@ export class PairInviteComponent {
     this.loading.set(true);
     this.error.set(null);
     this.invite.set(null);
+    this.copied.set(false);
 
     try {
       const code = await this.pairCode.createInvite();
@@ -60,24 +70,37 @@ export class PairInviteComponent {
 
     try {
       await navigator.clipboard.writeText(c);
+      this.showCopiedNotice();
     } catch {
-      // fallback
-      const ta = document.createElement('textarea');
-      ta.value = c;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = c;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+
+        this.showCopiedNotice();
+      } catch {
+        this.error.set('Не удалось скопировать код');
+      }
+    }
+  }
+
+  private showCopiedNotice() {
+    this.copied.set(true);
+
+    if (this.copiedTimer) {
+      clearTimeout(this.copiedTimer);
     }
   }
 
   statusText(): string {
     const s = this.invite()?.status ?? 'open';
-    if (s === 'used') return 'Партнёр подключился ✅';
     if (s === 'cancelled') return 'Код отменён';
     if (s === 'expired') return 'Срок действия истёк';
-    return 'Ожидаем, пока партнёр введёт код…';
+    return '';
   }
 }

@@ -3,11 +3,12 @@ import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UiButtonComponent, UiInputComponent } from '@/app/ui';
 import { PairCodeService } from '@/app/core/guards/pair-code.service';
+import { PairProgressComponent } from '../pair-progress/pair-progress.component';
 
 @Component({
   standalone: true,
   selector: 'app-pair-join',
-  imports: [RouterLink, ReactiveFormsModule, UiButtonComponent, UiInputComponent],
+  imports: [RouterLink, ReactiveFormsModule, UiButtonComponent, UiInputComponent, PairProgressComponent],
   templateUrl: './pair-join.component.html',
   styleUrl: './pair-join.component.scss',
 })
