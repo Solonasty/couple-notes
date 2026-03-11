@@ -19,9 +19,10 @@
 
     <div class="actions">
       <ui-button
-        class="ui-btn--h56 ui-btn--no-dim"
+        size="lg"
+        variant="solid"
+        color="brand"
         [full]="true"
-        variant="primary"
         type="submit"
         [disabled]="form.invalid || loading()"
         [loading]="loading()">
@@ -29,9 +30,10 @@
       </ui-button>
 
       <ui-button
-        class="ui-btn--h56 ui-btn--no-dim"
-        [full]="true"
+        size="lg"
         variant="outline"
+        color="neutral"
+        [full]="true"
         type="button"
         routerLink="/app/pair-setup"
         [disabled]="loading()">

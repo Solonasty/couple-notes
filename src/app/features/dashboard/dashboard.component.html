@@ -31,14 +31,15 @@
       </ui-input>
 
       <ui-button
-      class="ui-btn--h56 ui-btn--no-dim"
-      [full]="true"
-      variant="primary"
-      type="submit"
-      [disabled]="nameForm.invalid || savingName()"
-      [loading]="savingName()">
-      СОХРАНИТЬ
-    </ui-button>
+        size="lg"
+        variant="outline"
+        color="primary"
+        type="submit"
+        [full]="true"
+        [disabled]="nameForm.invalid || savingName()"
+        [loading]="savingName()">
+        СОХРАНИТЬ
+      </ui-button>
     </form>
 
     <form class="section form-block" [formGroup]="passwordForm" (ngSubmit)="changePassword()">
@@ -61,10 +62,11 @@
       </div>
 
       <ui-button
-        class="ui-btn--h56 ui-btn--no-dim"
-        [full]="true"
-        variant="primary"
+        size="lg"
+        variant="outline"
+        color="primary"
         type="submit"
+        [full]="true"
         [disabled]="passwordForm.invalid || savingPassword()"
         [loading]="savingPassword()">
         <span>СОХРАНИТЬ</span>

@@ -1,14 +1,28 @@
 <button
-  [class]="classList.join(' ')"
-  [attr.type]="type"
+  class="ui-btn"
+  [type]="type"
   [disabled]="isDisabled"
-  [attr.aria-busy]="loading ? 'true' : null">
+  [attr.aria-busy]="loading ? 'true' : null"
+  [class.ui-btn--full]="full"
+  [class.ui-btn--icon-only]="iconOnly"
+  [class.ui-btn--loading]="loading"
+  [class.ui-btn--sm]="size === 'sm'"
+  [class.ui-btn--md]="size === 'md'"
+  [class.ui-btn--lg]="size === 'lg'"
+  [class.ui-btn--solid]="variant === 'solid'"
+  [class.ui-btn--outline]="variant === 'outline'"
+  [class.ui-btn--ghost]="variant === 'ghost'"
+  [class.ui-btn--next]="variant === 'next'"
+  [class.ui-btn--primary]="color === 'primary'"
+  [class.ui-btn--neutral]="color === 'neutral'"
+  [class.ui-btn--danger]="color === 'danger'"
+  [class.ui-btn--brand]="color === 'brand'">
 
-    @if (loading) {
-      <span class="ui-btn__spinner" aria-hidden="true"></span>
-    }
+  @if (loading) {
+    <span class="ui-btn__spinner" aria-hidden="true"></span>
+  }
 
-    <span class="ui-btn__content" [class.ui-btn__content--hidden]="loading && hideContentWhileLoading">
-      <ng-content />
-    </span>
+  <span class="ui-btn__content">
+    <ng-content />
+  </span>
 </button>

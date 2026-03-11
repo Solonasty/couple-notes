@@ -25,18 +25,20 @@
 
     <div class="actions">
       <ui-button
-        class="ui-btn--h56 ui-btn--no-dim"
+        size="lg"
+        variant="solid"
+        color="primary"
         [full]="true"
-        variant="primary"
         type="submit"
         [disabled]="form.invalid">
         ВОЙТИ
       </ui-button>
 
       <ui-button
-        class="ui-btn--h56 ui-btn--no-dim"
-        [full]="true"
+        size="lg"
         variant="outline"
+        color="neutral"
+        [full]="true"
         type="button"
         [disabled]="loading()"
         routerLink="/auth/register">

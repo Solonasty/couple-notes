@@ -1,197 +1,169 @@
-/* ui-button.component.scss */
-
 .ui-btn {
-  /* size */
-  --ui-btn-h: 36px;
-  --ui-btn-px: 18px;
-  --ui-btn-radius: var(--app-radius-pill);
-  --ui-btn-gap: 10px;
-  --ui-btn-fs: 16px;
+  --btn-height: 40px;
+  --btn-padding-x: 16px;
+  --btn-gap: 10px;
+  --btn-radius: var(--app-radius-pill);
 
-  /* colors */
-  --ui-btn-bg: var(--mat-sys-primary);
-  --ui-btn-fg: var(--mat-sys-on-primary);
-  --ui-btn-border: transparent;
+  --btn-color-base: var(--mat-sys-primary);
+  --btn-color-on: var(--mat-sys-on-primary);
 
-  --ui-btn-hover-bg: color-mix(in oklab, var(--ui-btn-bg) 92%, black);
-  --ui-btn-active-bg: color-mix(in oklab, var(--ui-btn-bg) 88%, black);
-  --ui-btn-focus-ring: color-mix(in oklab, var(--ui-btn-bg) 35%, transparent);
-
-  /* disabled behavior */
-  --ui-btn-disabled-opacity: 0.6;
-
-  height: var(--ui-btn-h);
-  padding: 0 var(--ui-btn-px);
-
-  border: 1px solid var(--ui-btn-border);
-  border-radius: var(--ui-btn-radius);
-
-  background: var(--ui-btn-bg);
-  color: var(--ui-btn-fg);
-
-  cursor: pointer;
-  user-select: none;
+  --btn-bg: var(--btn-color-base);
+  --btn-fg: var(--btn-color-on);
+  --btn-border: transparent;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: var(--btn-gap);
+
+  width: auto;
+  height: var(--btn-height);
+  padding-inline: var(--btn-padding-x);
+
+  border: 1px solid var(--btn-border);
+  border-radius: var(--btn-radius);
+
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+
+  cursor: pointer;
+  user-select: none;
 
   font: var(--mat-sys-label-large);
-  font-size: var(--ui-btn-fs);
+  font-size: 16px;
   font-weight: 300;
   letter-spacing: 0.2px;
 
   transition:
-    transform .08s ease,
-    opacity .2s ease,
-    background-color .2s ease,
-    border-color .2s ease,
-    box-shadow .2s ease;
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.08s ease;
 
-  &:hover:not(:disabled) { background: var(--ui-btn-hover-bg); }
-  &:active:not(:disabled) { transform: scale(.99); background: var(--ui-btn-active-bg); }
+  &:hover:not(:disabled) {
+    filter: brightness(0.97);
+  }
 
-  &:disabled {
-    cursor: default;
-    opacity: var(--ui-btn-disabled-opacity);
+  &:active:not(:disabled) {
+    transform: scale(0.99);
   }
 
   &:focus-visible {
     outline: 0;
-    box-shadow: 0 0 0 3px var(--ui-btn-focus-ring);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--btn-bg) 28%, transparent);
   }
-}
 
-:host(.ui-btn--h56) .ui-btn {
-  --ui-btn-h: 56px;
-  --ui-btn-px: 20px;
-  --ui-btn-gap: 12px;
-  --ui-btn-fs: 16px;
-}
-
-:host(.ui-btn--h48) .ui-btn {
-  --ui-btn-h: 48px;
-}
-
-:host(.ui-btn--no-dim) .ui-btn {
-  --ui-btn-disabled-opacity: .7;
-}
-
-:host(.ui-btn--radius-md) .ui-btn {
-  --ui-btn-radius: var(--app-radius-md);
-}
-
-.ui-btn--next .ui-btn__content {
-  width: 100%;
-  justify-content: space-between;
+  &:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
 }
 
 .ui-btn--full {
   width: 100%;
 }
 
-.ui-btn__content {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ui-btn-gap);
+.ui-btn--icon-only {
+  width: var(--btn-height);
+  padding-inline: 0;
 }
 
+.ui-btn--sm {
+  --btn-height: 32px;
+  --btn-padding-x: 12px;
+  --btn-gap: 8px;
+}
 
-.ui-btn--sm { --ui-btn-h: 28px; --ui-btn-px: 14px; --ui-btn-gap: 8px;  --ui-btn-fs: 14px; }
-.ui-btn--md { --ui-btn-h: 36px; --ui-btn-px: 18px; --ui-btn-gap: 10px; --ui-btn-fs: 16px; }
-.ui-btn--lg { --ui-btn-h: 44px; --ui-btn-px: 20px; --ui-btn-gap: 12px; --ui-btn-fs: 16px; }
+.ui-btn--md {
+  --btn-height: 40px;
+  --btn-padding-x: 16px;
+  --btn-gap: 10px;
+}
 
+.ui-btn--lg {
+  --btn-height: 56px;
+  --btn-padding-x: 20px;
+  --btn-gap: 12px;
+}
+
+/* colors */
 .ui-btn--primary {
-  --ui-btn-bg: var(--mat-sys-primary);
-  --ui-btn-fg: var(--mat-sys-on-primary);
-  --ui-btn-border: transparent;
+  --btn-color-base: var(--mat-sys-primary);
+  --btn-color-on: var(--mat-sys-on-primary);
 }
 
-.ui-btn--accent {
-  --ui-btn-bg: var(--mat-sys-tertiary);
-  --ui-btn-fg: var(--mat-sys-on-tertiary);
-  --ui-btn-border: transparent;
-}
-
-.ui-btn--black {
-  --ui-btn-bg: var(--app-color-black);
-  --ui-btn-fg: var(--app-color-white);
-  --ui-btn-border: transparent;
-}
-
-.ui-btn--outline {
-  --ui-btn-bg: transparent;
-  --ui-btn-fg: var(--app-ink);
-  --ui-btn-border: color-mix(in oklab, var(--app-ink) 26%, transparent);
-
-  --ui-btn-hover-bg: color-mix(in oklab, var(--app-ink) 6%, transparent);
-  --ui-btn-active-bg: color-mix(in oklab, var(--app-ink) 10%, transparent);
-}
-
-.ui-btn--ghost {
-  --ui-btn-bg: transparent;
-  --ui-btn-fg: var(--mat-sys-primary);
-  --ui-btn-border: transparent;
-
-  --ui-btn-hover-bg: color-mix(in oklab, var(--mat-sys-primary) 10%, transparent);
-  --ui-btn-active-bg: color-mix(in oklab, var(--mat-sys-primary) 14%, transparent);
+.ui-btn--neutral {
+  --btn-color-base: var(--app-ink);
+  --btn-color-on: var(--app-surface, #fff);
 }
 
 .ui-btn--danger {
-  --ui-btn-bg: transparent;
-  --ui-btn-fg: var(--mat-sys-error);
-  --ui-btn-border: transparent;
-
-  --ui-btn-hover-bg: color-mix(in oklab, var(--mat-sys-error) 10%, transparent);
-  --ui-btn-active-bg: color-mix(in oklab, var(--mat-sys-error) 14%, transparent);
+  --btn-color-base: var(--mat-sys-error);
+  --btn-color-on: var(--mat-sys-on-error);
 }
 
+.ui-btn--brand {
+  --btn-color-base: var(--app-brand-green, #e9ff73);
+  --btn-color-on: var(--app-ink);
+}
+
+/* variants */
+.ui-btn--solid,
 .ui-btn--next {
-  --ui-btn-bg: var(--app-next-bg, #E9FF73);
-  --ui-btn-fg: var(--app-ink);
-  --ui-btn-border: transparent;
-
-  --ui-btn-hover-bg: color-mix(in oklab, var(--ui-btn-bg) 92%, black);
-  --ui-btn-active-bg: color-mix(in oklab, var(--ui-btn-bg) 88%, black);
-  --ui-btn-focus-ring: color-mix(in oklab, var(--ui-btn-bg) 35%, transparent);
-
-  font-weight: 500;
-  letter-spacing: 0.12px;
+  --btn-bg: var(--btn-color-base);
+  --btn-fg: var(--btn-color-on);
+  --btn-border: transparent;
 }
 
-.ui-btn__end-pill {
-  width: calc(var(--ui-btn-h) - 20px);
-  height: calc(var(--ui-btn-h) - 20px);
-  border-radius: var(--app-radius-pill);
+.ui-btn--outline {
+  --btn-bg: transparent;
+  --btn-fg: var(--btn-color-base);
+  --btn-border: color-mix(in oklab, var(--btn-color-base) 24%, transparent);
+}
+
+.ui-btn--ghost {
+  --btn-bg: transparent;
+  --btn-fg: var(--btn-color-base);
+  --btn-border: transparent;
+}
+
+/* content */
+.ui-btn__content {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in oklab, black 12%, transparent);
+  gap: var(--btn-gap);
+  width: 100%;
 }
 
-.ui-btn--icon {
-  width: var(--ui-btn-h);
-  padding: 0;
-}
-
-.ui-btn--icon .ui-btn__content {
-  gap: 0;
+.ui-btn--next .ui-btn__content {
+  justify-content: space-between;
 }
 
 .ui-btn__spinner {
   width: 16px;
   height: 16px;
-  margin-right: 1rem;
-  border-radius: 50%;
+  flex: 0 0 auto;
   border: 2px solid currentColor;
   border-right-color: transparent;
-  animation: uiBtnSpin .7s linear infinite;
+  border-radius: 50%;
+  animation: ui-btn-spin 0.7s linear infinite;
 }
 
-.ui-btn__content--hidden {
-  opacity: 0;
+.ui-btn__end-pill {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--app-radius-pill);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in oklab, black 10%, transparent);
 }
 
-@keyframes uiBtnSpin {
-  to { transform: rotate(360deg); }
+@keyframes ui-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

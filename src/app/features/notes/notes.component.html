@@ -11,8 +11,10 @@
         <div class="page-header__actions">
           @if (inPair()) {
             <ui-button
-              (click)="openNew()"
+              size="md"
               variant="outline"
+              color="primary"
+              (click)="openNew()"
               type="button"
               [loading]="loading()">
               Добавить
@@ -48,8 +50,10 @@
     <div class="detail" [class.closing]="closing()">
       <div class="detail-bar">
         <ui-button
+          size="md"
+          variant="solid"
+          color="primary"
           (click)="back()"
-          variant="primary"
           type="button"
           [disabled]="loading()">
           <ui-icon name="arrow_back"></ui-icon>
@@ -58,9 +62,10 @@
 
         @if (isEditMode()) {
           <ui-button
-            class="ui-btn--h48"
+          size="md"
+          variant="ghost"
+          color="primary"
             (click)="deleteCurrent()"
-            variant="ghost"
             type="button"
             [disabled]="loading()"
             [iconOnly]="true"

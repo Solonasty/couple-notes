@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
-export type UiButtonVariant = 'primary' | 'accent' | 'black' | 'outline' | 'ghost' | 'danger'  | 'next';
+export type UiButtonVariant = 'solid' | 'outline' | 'ghost' | 'next';
 export type UiButtonSize = 'sm' | 'md' | 'lg';
+export type UiButtonColor = 'primary' | 'neutral' | 'danger' | 'brand';
 
 @Component({
   standalone: true,
@@ -11,32 +12,17 @@ export type UiButtonSize = 'sm' | 'md' | 'lg';
   styleUrl: './ui-button.component.scss',
 })
 export class UiButtonComponent {
-  @Input() variant: UiButtonVariant = 'primary';
-  @Input() size: UiButtonSize = 'md';
+  @Input() variant: UiButtonVariant = 'solid';
+  @Input() size: UiButtonSize = 'lg';
+  @Input() color: UiButtonColor = 'primary';
 
   @Input() type: 'button' | 'submit' | 'reset' = 'button';
   @Input() full = false;
-
   @Input() disabled = false;
   @Input() loading = false;
-
-  @Input() hideContentWhileLoading = false;
   @Input() iconOnly = false;
 
-
-  get isDisabled() {
+  get isDisabled(): boolean {
     return this.disabled || this.loading;
-  }
-
-  get classList(): string[] {
-    return [
-      'ui-btn',
-      `ui-btn--${this.variant}`,
-      `ui-btn--${this.size}`,
-      this.full ? 'ui-btn--full' : '',
-      this.loading ? 'ui-btn--loading' : '',
-      this.iconOnly ? 'ui-btn--icon' : '',
-
-    ].filter(Boolean);
   }
 }

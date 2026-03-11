@@ -31,9 +31,10 @@
 
   <div class="actions">
     <ui-button
-      class="ui-btn--h56 ui-btn--no-dim"
+      size="lg"
+      variant="solid"
+      color="primary"
       [full]="true"
-      variant="outline"
       type="button"
       (click)="generate()"
       [disabled]="loading()"
@@ -42,9 +43,10 @@
     </ui-button>
 
     <ui-button
-      class="ui-btn--h56 ui-btn--no-dim"
-      [full]="true"
+      size="lg"
       variant="outline"
+      color="neutral"
+      [full]="true"
       type="button"
       routerLink="/app/pair-setup">
       НАЗАД

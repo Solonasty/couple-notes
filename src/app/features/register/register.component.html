@@ -32,9 +32,10 @@
 
     <div class="actions">
       <ui-button
-        class="ui-btn--h56 ui-btn--no-dim"
-        [full]="true"
+        size="lg"
         variant="next"
+        color="brand"
+        [full]="true"
         type="submit"
         [disabled]="form.invalid"
         [loading]="loading()">
@@ -46,9 +47,10 @@
       </ui-button>
 
       <ui-button
-        class="ui-btn--h56 ui-btn--no-dim"
-        [full]="true"
+        size="lg"
         variant="outline"
+        color="neutral"
+        [full]="true"
         type="button"
         [disabled]="loading()"
         routerLink="/auth/login">
