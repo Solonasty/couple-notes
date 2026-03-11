@@ -1,14 +1,14 @@
 <mat-toolbar color="primary" class="toolbar">
-      <div class="account">
-          <div class="avatar">{{ initials() }}</div>
-          <div class="account-text">
-              <div class="account-name">{{ accountName() }}</div>
-          </div>
-      </div>
+    <div class="account account-link" routerLink="/app/dashboard">
+        <div class="avatar">{{ initials() }}</div>
+        <div class="account-text">
+            <div class="account-name">{{ accountName() }}</div>
+        </div>
+    </div>
 
-      <button mat-icon-button class="logout-btn" (click)="logout()" aria-label="Выйти">
-          <ui-icon name="logout" size="lg"></ui-icon>
-      </button>
+    <button mat-icon-button class="logout-btn" (click)="logout()" aria-label="Выйти">
+        <ui-icon name="logout" size="lg"></ui-icon>
+    </button>
 </mat-toolbar>
 
 <main class="content" [class.content--mobile]="isMobile()">

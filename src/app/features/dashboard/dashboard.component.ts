@@ -9,6 +9,7 @@ import {
   updatePassword,
 } from 'firebase/auth';
 import { UiButtonComponent, UiInputComponent } from '@/app/ui';
+import { RouterLink } from '@angular/router';
 
 @Component({
   standalone: true,
@@ -17,6 +18,7 @@ import { UiButtonComponent, UiInputComponent } from '@/app/ui';
     ReactiveFormsModule,
     UiButtonComponent,
     UiInputComponent,
+    RouterLink,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
@@ -46,6 +48,8 @@ export class DashboardComponent {
     const firstName = name.split(/\s+/)[0];
     return `Привет, ${firstName}`;
   });
+
+  readonly isWithoutPair = computed(() => !this.profile()?.pairId);
 
   nameForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(40)]],

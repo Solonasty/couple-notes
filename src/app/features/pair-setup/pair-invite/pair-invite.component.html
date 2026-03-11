@@ -1,10 +1,7 @@
 <div class="page">
   <app-pair-setup-progress [currentStep]="2" [currentStepLabel]="'Отправьте код партнёру'"></app-pair-setup-progress>
 
-  <p class="subtitle">
-    Нажмите на код, чтобы скопировать его и отправьте его партнёру.
-    Когда партнёр введёт код у себя, пара создастся автоматически.
-  </p>
+  <p class="subtitle">Нажмите на код, чтобы скопировать его и отправить партнёру 🔐</p>
 
   @if (error()) {
     <div class="form-error" role="alert">{{ error() }}</div>
@@ -28,6 +25,8 @@
 
     <div class="status">{{ statusText() }}</div>
   </div>
+
+  <p class="subtitle">Когда партнёр введёт код у себя, пара создастся автоматически 🫶</p>
 
   <div class="actions">
     <ui-button

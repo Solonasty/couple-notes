@@ -2,14 +2,14 @@
 
   <app-pair-setup-progress [currentStep]="2" [currentStepLabel]="'Введите код'"></app-pair-setup-progress>
 
-  <p class="subtitle">Введите код, который прислал вам партнёр.
-    После этого вы подключитесь к паре.</p>
+  <p class="subtitle">Введите код, который прислал вам партнёр 🔐</p>
+  <p class="subtitle">После этого вы подключитесь к паре автоматически 🫶</p>
 
   <form class="form" [formGroup]="form" (ngSubmit)="submit()">
     <ui-input
       formControlName="code"
       type="text"
-      placeholder="Код (например ZNEQQW)"
+      placeholder="Введите код ..."
       autocomplete="one-time-code">
     </ui-input>
 
@@ -26,7 +26,7 @@
         type="submit"
         [disabled]="form.invalid || loading()"
         [loading]="loading()">
-        ПРИСОЕДЕНИТЬСЯ
+        ПОДТВЕРДИТЬ
       </ui-button>
 
       <ui-button

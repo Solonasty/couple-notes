@@ -3,20 +3,18 @@
   <app-pair-setup-progress [currentStep]="3" [currentStepLabel]="'Создание пары'"></app-pair-setup-progress>
 
   @if (!hasPair()) {
-    <p class="subtitle">Мы связываем ваши аккаунты и открываем доступ к общим заметкам и еженедельному отчёту.
-      Это обычно занимает несколько секунд.</p>
+    <p class="subtitle">Мы связываем ваши аккаунты и открываем доступ к общим заметкам 🔄</p>
+    <p class="subtitle">Обычно это занимает всего несколько секунд ⏳</p>
   } @else {
-    <h1 class="title">Пара создана ✅</h1>
-    <p class="subtitle">Всё готово — открываем общие заметки и остальные функции приложения.</p>
+    <p class="subtitle">Пара создана ✅ — открываем общие заметки и остальные функции приложения.</p>
   }
 
   <div class="actions">
     <ui-button
-    size="lg"
-    variant="outline"
-    color="primary"
+      size="lg"
+      variant="outline"
+      color="neutral"
       [full]="true"
-
       type="button"
       routerLink="/app/pair-setup">
       НАЗАД

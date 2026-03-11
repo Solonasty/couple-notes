@@ -14,6 +14,7 @@ export const APP_ICONS = [
   'edit',
   'arrow_forward',
   'done',
+  'about',
 
 ] as const;
 export type AppIconName = (typeof APP_ICONS)[number];

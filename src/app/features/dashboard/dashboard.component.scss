@@ -1,3 +1,19 @@
+.page-setup-view {
+  min-height: calc(100dvh - 56px);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+}
+
+.back-button{
+  display: none;
+}
+
+.back-button-setup-view {
+  display: block;
+  margin-top: auto;
+}
+
 .email {
   font: var(--mat-sys-body-large);
   letter-spacing: var(--mat-sys-body-large-tracking);

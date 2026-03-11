@@ -3,7 +3,6 @@
   padding: 26px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
 }
 
 .subtitle {
@@ -17,7 +16,9 @@
 }
 
 .form {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  margin-top: auto;
+  flex: 1;
+  margin-top: 20px;
 }

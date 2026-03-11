@@ -1,5 +1,5 @@
 import { Component, effect, inject, signal } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { BreakpointObserver, Breakpoints, LayoutModule } from '@angular/cdk/layout';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,6 +12,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
   selector: 'app-pair-setup-shell',
   imports: [
     RouterOutlet,
+    RouterLink,
     LayoutModule,
     MatToolbarModule,
     MatButtonModule,

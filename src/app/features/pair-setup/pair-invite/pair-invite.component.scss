@@ -13,6 +13,7 @@
 }
 
 .code {
+  color: var(--app-ink);
   border-radius: 16px;
   padding: 16px;
   background: rgba(0, 0, 0, 0.04);
@@ -22,6 +23,10 @@
 }
 
 .code-button {
+  -webkit-appearance: none;
+  color: inherit;
+  -webkit-text-fill-color: currentColor;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -41,7 +46,7 @@
 }
 
 .code-button:focus-visible {
-  outline: 2px solid var(--mat-sys-primary);
+  outline: 2px solid var(--app-ink);
   outline-offset: 6px;
   border-radius: 12px;
 }

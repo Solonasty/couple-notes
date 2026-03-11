@@ -1,4 +1,4 @@
-<div class="page">
+<div class="page" [class.page-setup-view]="isWithoutPair()">
   <div class="page-header">
     <header class="page-header__row">
       <div class="page-header__title">
@@ -36,7 +36,7 @@
         color="primary"
         type="submit"
         [full]="true"
-        [disabled]="nameForm.invalid || savingName()"
+        [disabled]="nameForm.invalid || savingName() || !nameForm.dirty"
         [loading]="savingName()">
         СОХРАНИТЬ
       </ui-button>
@@ -73,4 +73,16 @@
       </ui-button>
     </form>
   </div>
+
+  <ui-button
+    [class.back-button-setup-view]="isWithoutPair()"
+    class="back-button"
+    size="lg"
+    variant="outline"
+    color="neutral"
+    [full]="true"
+    type="button"
+    routerLink="/app/pair-setup">
+    НАЗАД
+  </ui-button>
 </div>
