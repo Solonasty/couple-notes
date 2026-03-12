@@ -1,6 +1,7 @@
-import { Component, effect, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, ElementRef, ViewChild, effect, inject, signal } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import { BreakpointObserver, Breakpoints, LayoutModule } from '@angular/cdk/layout';
+import { filter } from 'rxjs/operators';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -28,6 +29,8 @@ import { AuthService } from '../../guards/auth.service';
   styleUrl: './shell.component.scss',
 })
 export class ShellComponent {
+  @ViewChild('content', { read: ElementRef }) contentRef!: ElementRef<HTMLElement>;
+
   private bo = inject(BreakpointObserver);
   private auth = inject(AuthService);
   private router = inject(Router);
@@ -39,11 +42,28 @@ export class ShellComponent {
   constructor() {
     this.bo.observe([Breakpoints.XSmall]).subscribe(r => this.isMobile.set(r.matches));
 
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.scrollContentToTop();
+      });
+
     effect(() => {
       const p = this.profile();
       if (p && !p.pairId) {
         void this.router.navigateByUrl('/app', { replaceUrl: true });
       }
+    });
+  }
+
+  private scrollContentToTop(): void {
+    const el = this.contentRef?.nativeElement;
+    if (!el) return;
+
+    el.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'auto',
     });
   }
 

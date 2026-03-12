@@ -23,7 +23,9 @@
     "@angular/platform-browser-dynamic": "^20.3.16",
     "@angular/router": "^20.3.16",
     "@angular/service-worker": "^20.3.16",
+    "dompurify": "^3.3.3",
     "firebase": "^11.10.0",
+    "marked": "^17.0.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"

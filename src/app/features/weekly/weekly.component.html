@@ -40,7 +40,7 @@
     <!-- Текст отчёта -->
     @if (summary()) {
       <div class="section">
-        <pre class="report-pre">{{ summary() }}</pre>
+        <div class="report-md" [innerHTML]="summaryHtml()"></div>
       </div>
     }
   </div>

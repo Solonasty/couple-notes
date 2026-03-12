@@ -1,5 +1,7 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 import { ReportsService, ReportTarget } from '../../core/services/reports.service';
 import { ReportDoc, ReportSourceNote } from '@/app/core/models/report-doc.type';
@@ -35,6 +37,18 @@ export class WeeklyComponent {
   summary = signal<string | null>(null);
   uiError = signal<string | null>(null);
   loading = signal(false);
+
+  summaryHtml = computed(() => {
+    const value = this.summary();
+    if (!value) return '';
+
+    const rawHtml = marked.parse(value, {
+      breaks: true,
+      gfm: true,
+    }) as string;
+
+    return DOMPurify.sanitize(rawHtml);
+  });
 
   private sched = computed<Schedule>(() => this.schedule() ?? SCHEDULE_INIT);
 
@@ -83,7 +97,6 @@ export class WeeklyComponent {
 
     if (!s.inPair) return 'Вступите в пару, чтобы получать отчёты.';
 
-    // когда due ещё нет — мы работаем с предыдущим отчётом
     if (!s.due) {
       if (r?.status === 'generating') return `Генерация отчёта за предыдущий период... Следующий отчет будет готов через ${eta}.`;
       if (r?.status === 'error') return `Ошибка генерации отчёта за предыдущий период. Включите VPN и попробуйте снова. Следующий отчет будет готов через ${eta}.`;
@@ -91,7 +104,6 @@ export class WeeklyComponent {
       return `Готовлю отчёт за предыдущий период. Следующий отчет будет готов через ${eta} (в пятницу в 18:00).`;
     }
 
-    // due наступил — работаем с текущим
     if (r?.status === 'generating') return `Генерация отчёта... Следующий отчет будет готов через ${eta}.`;
     if (r?.status === 'error') return `Ошибка генерации отчёта. Включите VPN и попробуйте снова. Следующий отчет будет готов через ${eta}.`;
     if (r?.status === 'ready') return `Отчёт готов! Следующий отчет можно будет получить через ${eta} (в пятницу в 18:00).`;
@@ -100,14 +112,11 @@ export class WeeklyComponent {
   });
 
   constructor() {
-    // 1) Как только готов — показываем автоматически
     effect(() => {
       const ready = this.readyReport();
       if (ready) this.summary.set(ready.summary ?? '');
     });
 
-    // 2) Автогенерация при входе/смене периода:
-    // - если ready нет, и не generating -> запускаем один раз
     effect(() => {
       const s = this.sched();
 
@@ -119,21 +128,17 @@ export class WeeklyComponent {
         return;
       }
 
-      // ждём, пока расписание реально заполнится
       if (!s.slotStart || !s.slotEnd) return;
 
       const t = this.target();
       const p = this.reports.periodFor(t, s);
       if (!p.slotStart || !p.slotEnd || !p.reportId) return;
 
-      // ждём, пока target report реально загрузится
       const tr = this.targetReport();
       if (tr === undefined) return;
 
-      // если уже готов/в процессе — ничего не делаем
       if (tr && (tr.status === 'ready' || tr.status === 'generating')) return;
 
-      // уникальный ключ периода
       const key = `${t}|${s.pairId ?? ''}|${p.reportId}`;
       if (this.autoKey() !== key) {
         this.autoKey.set(key);
@@ -174,7 +179,6 @@ export class WeeklyComponent {
 
     try {
       await this.reports.generateWeekly(target);
-      // summary появится автоматически, когда report станет ready
     } catch {
       this.uiError.set('Ошибка получения отчёта. Включите VPN и попробуйте снова.');
     } finally {
@@ -199,8 +203,4 @@ function formatDate(d: Date) {
 
 function pad2(n: number) {
   return String(n).padStart(2, '0');
-}
-
-function formatDt(d: Date) {
-  return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
