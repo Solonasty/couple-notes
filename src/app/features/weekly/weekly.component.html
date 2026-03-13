@@ -2,7 +2,7 @@
   <div class="page-header">
     <header class="page-header__row">
       <div class="page-header__title">
-        <h1 class="page-header__h1">Сводка недели</h1>
+        <h1 class="page-header__h1">Дайджест недели</h1>
       </div>
     </header>
   </div>
@@ -12,12 +12,12 @@
     <div class="section">
       <p class="status">{{ statusText() }}</p>
 
-      @if (periodText()) {
+      <!-- @if (periodText()) {
         <div class="meta-line">
           <p class="status">Отчет за:</p>
           <span>{{ periodText() }}</span>
         </div>
-      }
+      } -->
     </div>
 
     @if (loading()) {

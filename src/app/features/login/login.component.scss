@@ -36,3 +36,30 @@
   font: var(--mat-sys-body-small);
   letter-spacing: var(--mat-sys-body-small-tracking);
 }
+
+.form-loading {
+  margin-top: 6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font: var(--mat-sys-body-medium);
+  letter-spacing: var(--mat-sys-body-medium-tracking);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.form-loading__spinner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, .16);
+  border-top-color: #835de1;
+  border-right-color: #835de1;
+  animation: app-spin .8s linear infinite;
+}
+
+@keyframes form-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

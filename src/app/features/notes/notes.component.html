@@ -27,7 +27,7 @@
     @if (!inPair()) {
       <p class="empty">Вы сможете добавлять и видеть заметки, когда вступите в пару.</p>
     } @else if (notes().length === 0) {
-      <p class="empty">Пока нет заметок. Нажмите “+”.</p>
+      <p class="empty">Добавьте свою первую заметку ✍️</p>
     } @else {
       <div class="grid" role="list">
         @for (n of notes(); track n.id; let i = $index) {

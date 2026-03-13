@@ -30,6 +30,12 @@
       <div class="form-error" role="alert">{{ error() }}</div>
     }
 
+    @if (loading()) {
+      <div class="form-loading" aria-live="polite">
+        <span class="form-loading__spinner" aria-hidden="true"></span>
+      </div>
+    }
+
     <div class="actions">
       <ui-button
         size="lg"
@@ -37,7 +43,7 @@
         color="brand"
         [full]="true"
         type="submit"
-        [disabled]="form.invalid"
+        [disabled]="form.invalid || loading()"
         [loading]="loading()">
         <span>СОЗДАТЬ АККАУНТ</span>
 

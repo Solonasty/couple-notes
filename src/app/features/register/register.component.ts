@@ -39,7 +39,7 @@ export class RegisterComponent {
   });
 
   async submit() {
-    if (this.form.invalid) return;
+    if (this.loading() || this.form.invalid) return;
 
     this.loading.set(true);
     this.error.set(null);
