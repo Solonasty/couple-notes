@@ -10,6 +10,9 @@ import {
   map,
   distinctUntilChanged,
   take,
+  of,
+  filter,
+  firstValueFrom,
 } from 'rxjs';
 import { AuthService } from '../guards/auth.service';
 import { PairContextService } from './pair-context.service';
@@ -21,95 +24,134 @@ export class PairProfileSyncService {
   private auth = inject(AuthService);
   private pairCtx = inject(PairContextService);
 
-  init() {
-    return this.auth.user$.pipe(
-      switchMap((user) => {
-        if (!user) return EMPTY;
+  bootstrap(): Promise<void> {
+    return firstValueFrom(
+      this.auth.user$.pipe(
+        take(1),
+        switchMap((user) => {
+          if (!user) return of(null);
 
-        const myRef = doc(this.fs, `users/${user.uid}`) as unknown as DocumentReference<User>;
-        const myProfile$ = docData(myRef) as unknown as Observable<User>;
+          const myRef = doc(this.fs, `users/${user.uid}`) as unknown as DocumentReference<User>;
+          const myProfile$ = docData(myRef).pipe(
+            filter((profile): profile is User => profile != null),
+            take(1)
+          );
+          const activePair$ = this.pairCtx.activePair$.pipe(take(1));
 
-        return combineLatest({
-          profile: myProfile$,
-          activePair: this.pairCtx.activePair$,
-        }).pipe(
-          map(({ profile, activePair }) => ({ user, profile, activePair })),
+          return combineLatest({
+            profile: myProfile$,
+            activePair: activePair$,
+          }).pipe(
+            switchMap(({ profile, activePair }) =>
+              this.syncOnce(user.uid, myRef, profile, activePair)
+            ),
+            take(1)
+          );
+        })
+      )
+    ).then(() => undefined);
+  }
 
-          distinctUntilChanged((a, b) => {
-            const aPair = a.activePair?.id ?? null;
-            const bPair = b.activePair?.id ?? null;
-            return (
-              (a.profile?.pairId ?? null) === (b.profile?.pairId ?? null) &&
-              (a.profile?.partnerUid ?? null) === (b.profile?.partnerUid ?? null) &&
-              aPair === bPair
-            );
-          }),
+  private syncOnce(
+    currentUid: string,
+    myRef: DocumentReference<User>,
+    profile: User | undefined,
+    activePair: any
+  ) {
+    const currentPairId = profile?.pairId ?? null;
 
-          switchMap(({ user, profile, activePair }) => {
-            const currentPairId = profile?.pairId ?? null;
+    // активной пары нет
+    if (!activePair) {
+      if (!currentPairId) return of(null);
 
-            // нет активной пары
-            if (!activePair) {
-              if (!currentPairId) return EMPTY;
+      const patch: Partial<User> = {
+        pairId: null,
+        partnerUid: null,
+        partnerEmail: null,
+        updatedAt: serverTimestamp() as any,
+      };
 
-              const patch: User = {
-                pairId: null,
-                partnerUid: null,
-                partnerEmail: null,
-                updatedAt: serverTimestamp(),
-              };
+      return from(updateDoc(myRef, patch));
+    }
 
-              return from(updateDoc(myRef, patch));
-            }
+    const nextPairId = activePair.id;
+    const members = Array.isArray(activePair.members)
+      ? (activePair.members as string[])
+      : [];
 
-            // активная пара есть
-            const nextPairId = activePair.id;
+    const partnerUid = members.find((m) => m !== currentUid) ?? null;
+    const needUpdate =
+      currentPairId !== nextPairId ||
+      (profile?.partnerUid ?? null) !== partnerUid;
 
-            const members = Array.isArray(activePair.members) ? activePair.members : [];
-            const partnerUid = members.find((m) => m !== user.uid) ?? null;
+    if (!needUpdate) return of(null);
 
-            const needUpdate =
-              currentPairId !== nextPairId ||
-              (profile?.partnerUid ?? null) !== partnerUid;
+    // пара есть, но второй участник ещё не определён
+    if (!partnerUid) {
+      const patch: Partial<User> = {
+        pairId: nextPairId,
+        partnerUid: null,
+        partnerEmail: null,
+        updatedAt: serverTimestamp() as any,
+      };
 
-            if (!needUpdate) return EMPTY;
+      return from(updateDoc(myRef, patch));
+    }
 
-            // если партнёр ещё не определён — просто пишем pairId, а партнёрские поля очищаем
-            if (!partnerUid) {
-              const patch: User = {
-                pairId: nextPairId,
-                partnerUid: null,
-                partnerEmail: null,
-                updatedAt: serverTimestamp(),
-              };
+    const partnerPublicRef = doc(
+      this.fs,
+      `publicUsers/${partnerUid}`
+    ) as unknown as DocumentReference<User>;
 
-              return from(updateDoc(myRef, patch));
-            }
+    const partnerPublic$ = docData(partnerPublicRef).pipe(
+      filter((partnerPublic): partnerPublic is User => partnerPublic != null),
+      take(1)
+    );
 
-            // берём email партнёра из publicUsers/{uid}
-            const partnerPublicRef = doc(
-              this.fs,
-              `publicUsers/${partnerUid}`
-            ) as unknown as DocumentReference<User>;
+    return partnerPublic$.pipe(
+      switchMap((partnerPublic) => {
+        const patch: Partial<User> = {
+          pairId: nextPairId,
+          partnerUid,
+          partnerEmail: partnerPublic?.email ?? null,
+          updatedAt: serverTimestamp() as any,
+        };
 
-            const partnerPublic$ = docData(partnerPublicRef) as unknown as Observable<User>;
-
-            return partnerPublic$.pipe(
-              take(1),
-              switchMap((partnerPublic) => {
-                const patch: User = {
-                  pairId: nextPairId,
-                  partnerUid,
-                  partnerEmail: partnerPublic.email ?? null,
-                  updatedAt: serverTimestamp(),
-                };
-
-                return from(updateDoc(myRef, patch));
-              })
-            );
-          })
-        );
+        return from(updateDoc(myRef, patch));
       })
     );
   }
+
+init() {
+  return this.auth.user$.pipe(
+    switchMap((user) => {
+      if (!user) return EMPTY;
+
+      const myRef = doc(this.fs, `users/${user.uid}`) as unknown as DocumentReference<User>;
+      const myProfile$ = docData(myRef) as Observable<User | undefined>;
+
+      return combineLatest({
+        profile: myProfile$,
+        activePair: this.pairCtx.activePair$,
+      }).pipe(
+        map(({ profile, activePair }) => ({ user, profile, activePair })),
+
+        distinctUntilChanged((a, b) => {
+          const aPair = a.activePair?.id ?? null;
+          const bPair = b.activePair?.id ?? null;
+
+          return (
+            (a.profile?.pairId ?? null) === (b.profile?.pairId ?? null) &&
+            (a.profile?.partnerUid ?? null) === (b.profile?.partnerUid ?? null) &&
+            aPair === bPair
+          );
+        }),
+
+        switchMap(({ user, profile, activePair }) =>
+          this.syncOnce(user.uid, myRef, profile, activePair)
+        )
+      );
+    })
+  );
+}
 }
